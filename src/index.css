@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #FAFAFA;
+  --text-primary: #1C1C1E;
+  --text-secondary: #2C2C2E; /* Charcoal dark grey for high contrast in light mode */
+  --text-muted: #57575C; /* Medium-dark grey for labels/descriptions in light mode */
+  --accent-color: #D4AF37; /* Gold */
+  --flare-color: rgba(212, 175, 55, 0.06);
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --transition-speed: 600ms;
+}
+
+.dark {
+  --bg-primary: #080808;
+  --text-primary: #FFFFFF;
+  --text-secondary: #E5E5EA; /* Light grey for high contrast in dark mode */
+  --text-muted: #A1A1AA; /* Slate grey for labels/descriptions in dark mode */
+  --accent-color: #E5E7EB; /* Silver */
+  --flare-color: rgba(229, 231, 235, 0.05);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  transition: background 1s ease;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(142, 142, 147, 0.3);
+  border-radius: 4px;
+  border: 2px solid var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+/* Custom Selection */
+::selection {
+  background: var(--accent-color);
+  color: var(--bg-primary);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  font-family: 'Inter', sans-serif;
+  transition: background-color var(--transition-speed) cubic-bezier(0.25, 1, 0.5, 1), color var(--transition-speed) cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display, 'Outfit', sans-serif);
+}
+
+/* Custom Text Gradient */
+.text-brand-gradient {
+  background: linear-gradient(135deg, var(--accent-grad-start, #BF953F) 0%, var(--accent-grad-mid, #D4AF37) 50%, var(--accent-grad-end, #835F0C) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: background 1000ms ease;
+}
+
+/* Glowing Spotlights */
+.glow-brand {
+  box-shadow: 0 0 40px -10px var(--accent-glow-shadow, rgba(212, 175, 55, 0.25));
+  transition: box-shadow 1000ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.glow-brand-hover {
+  transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.glow-brand-hover:hover {
+  box-shadow: 0 0 50px -5px var(--accent-color, #D4AF37);
+  border-color: var(--accent-color, rgba(212, 175, 55, 0.3));
+}
+
+.glass-brand {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  box-shadow: var(--card-shadow);
+  transition: background var(--transition-speed) ease, border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.dark .glass-brand {
+  background: rgba(18, 18, 21, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: var(--card-shadow);
+  transition: background var(--transition-speed) ease, border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.glassmorphism-nav {
+  background: rgba(250, 250, 250, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+  transition: background 1s ease, border-bottom-color 1s ease;
+}
+
+.dark .glassmorphism-nav {
+  background: rgba(8, 8, 8, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Cinematic lighting animations */
+.light-flare {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.25;
+  background: var(--flare-color);
+  transition: background 1s ease;
+}
+
+/* Custom CSS styles to replace standard Vite layout */
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  text-align: left;
+  border: none;
+  min-height: 100vh;
+}
+
