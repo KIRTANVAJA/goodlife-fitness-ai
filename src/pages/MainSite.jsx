@@ -17,6 +17,9 @@ import Pricing from '../sections/Pricing';
 import Trainers from '../sections/Trainers';
 import Testimonials from '../sections/Testimonials';
 import Gallery from '../sections/Gallery';
+import AiCoachSection from '../sections/AiCoachSection';
+import BmiCalculator from '../sections/BmiCalculator';
+import DietPlans from '../sections/DietPlans';
 import Contact from '../sections/Contact';
 
 const MainSite = () => {
@@ -83,7 +86,10 @@ const MainSite = () => {
       {/* Main Content Sections */}
       <main className="relative z-10 w-full">
         <div id="hero-section" data-section="Hero"><Hero /></div>
+        <div id="ai-coach-section" data-section="AiCoach"><AiCoachSection /></div>
         <div id="about-section" data-section="About"><About /></div>
+        <div id="bmi-section" data-section="BmiCalculator"><BmiCalculator /></div>
+        <div id="diet-section" data-section="DietPlans"><DietPlans /></div>
         <div id="pricing-section" data-section="Pricing"><Pricing /></div>
         <div id="trainers-section" data-section="Trainers"><Trainers /></div>
         <div id="gallery-section" data-section="Gallery"><Gallery /></div>

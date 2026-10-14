@@ -8,6 +8,7 @@ import {
   saveFirebaseConfig, 
   clearFirebaseConfig 
 } from '../utils/db';
+import storageService from '../services/storageService';
 
 export const ContentContext = createContext();
 
@@ -207,16 +208,29 @@ const DEFAULT_CONTENT = {
 export const ContentProvider = ({ children }) => {
   const [content, setContent] = useState(() => {
     const saved = localStorage.getItem('glf_website_content');
+    const savedTheme = storageService.getItem('preferences:theme', null);
+
+    let base = DEFAULT_CONTENT;
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Fallback for missing keys in case of schema additions
-        return { ...DEFAULT_CONTENT, ...parsed };
+        base = { ...DEFAULT_CONTENT, ...parsed };
       } catch (e) {
         console.error('Error parsing stored content, resetting defaults.', e);
       }
     }
-    return DEFAULT_CONTENT;
+
+    if (savedTheme) {
+      base = {
+        ...base,
+        themeSettings: {
+          ...base.themeSettings,
+          ...savedTheme,
+        },
+      };
+    }
+
+    return base;
   });
 
   const [firebaseConfig, setFirebaseConfigState] = useState(getFirebaseConfig);
@@ -235,6 +249,9 @@ export const ContentProvider = ({ children }) => {
 
   useEffect(() => {
     localStorage.setItem('glf_website_content', JSON.stringify(content));
+    if (content.themeSettings) {
+      storageService.setItem('preferences:theme', content.themeSettings);
+    }
   }, [content]);
 
   // Inject styles dynamically into document root whenever theme settings change

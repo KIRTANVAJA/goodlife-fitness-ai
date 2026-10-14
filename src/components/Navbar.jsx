@@ -1,75 +1,43 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Menu, X, Dumbbell, ShieldCheck, ArrowRight } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Menu, X, Dumbbell, Sparkles, User, LogOut, Camera, Sun, Moon, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ContentContext } from '../context/ContentContext';
+import { useAuth } from '../context/AuthContext';
+import UserAuthModal from './UserAuthModal';
 
 const Navbar = ({ theme, onAdminTrigger }) => {
-  const { content } = useContext(ContentContext);
+  const { content, updateThemeSettings } = useContext(ContentContext);
+  const { user, logout, isAuthenticated, isPremium, upgradeToPremium } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState('home');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
 
-  // Logo 5-click counter
+  // Logo 5-click counter for secret admin access
   const [logoClicks, setLogoClicks] = useState(0);
   const [lastLogoClickTime, setLastLogoClickTime] = useState(0);
 
-  const contactInfo = content.contact;
-  const themeSettings = content.themeSettings;
-
   const navItems = [
-    { label: 'Home', id: 'home' },
-    { label: 'About', id: 'about' },
-    { label: 'Pricing', id: 'pricing' },
-    { label: 'Trainers', id: 'trainers' },
-    { label: 'Gallery', id: 'gallery' },
-    { label: 'Testimonials', id: 'testimonials' },
-    { label: 'Contact', id: 'contact' },
+    { label: 'Home', path: '/' },
+    { label: 'AI Coach', path: '/ai-coach', badge: 'PRO' },
+    { label: 'Exercises', path: '/exercises' },
+    { label: 'Diet Planner', path: '/#diet' },
+    { label: 'BMI Calc', path: '/#bmi' },
+    { label: 'History', path: '/workout/history' },
   ];
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-
-      // Check which section is in view
-      const scrollPosition = window.scrollY + 120;
-      for (const item of navItems) {
-        const el = document.getElementById(item.id);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveSection(item.id);
-          }
-        }
-      }
+      setScrolled(window.scrollY > 20);
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const scrollToSection = (id) => {
-    setIsOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      const offset = 80;
-      const bodyRect = document.body.getBoundingClientRect().top;
-      const elementRect = element.getBoundingClientRect().top;
-      const elementPosition = elementRect - bodyRect;
-      const offsetPosition = elementPosition - offset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
-  };
 
   const handleLogoClick = () => {
     const now = Date.now();
@@ -77,7 +45,7 @@ const Navbar = ({ theme, onAdminTrigger }) => {
       const clicks = logoClicks + 1;
       setLogoClicks(clicks);
       if (clicks >= 5) {
-        setLogoClicks(0); // Reset clicks
+        setLogoClicks(0);
         if (onAdminTrigger) {
           onAdminTrigger();
         } else {
@@ -88,124 +56,298 @@ const Navbar = ({ theme, onAdminTrigger }) => {
       setLogoClicks(1);
     }
     setLastLogoClickTime(now);
-    scrollToSection('home');
+    navigate('/');
   };
 
-  const handleBookTrial = () => {
-    const text = encodeURIComponent("Hello Good Life Fitness! I'd like to book a 1-Day Free Trial VIP Access Pass.");
-    window.open(`https://wa.me/${contactInfo.whatsApp}?text=${text}`, '_blank');
+  const isLight = content.themeSettings?.lightLuxuryTheme ?? true;
+
+  const handleToggleTheme = () => {
+    updateThemeSettings({
+      ...content.themeSettings,
+      lightLuxuryTheme: !isLight,
+    });
+  };
+
+  const handleNavClick = (path) => {
+    setIsOpen(false);
+    if (path.startsWith('/#')) {
+      const hash = path.substring(2);
+      if (location.pathname === '/') {
+        const el = document.getElementById(hash);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+      }
+      navigate(path);
+    }
+  };
+
+  const handleUpgrade = async () => {
+    setUpgrading(true);
+    try {
+      await upgradeToPremium();
+    } catch (err) {
+      console.error('Upgrade failed:', err);
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
+  const isNavItemActive = (itemPath) => {
+    if (itemPath === '/') {
+      return location.pathname === '/' && !location.hash;
+    }
+    if (itemPath.startsWith('/#')) {
+      return location.hash === itemPath.substring(1);
+    }
+    return location.pathname.startsWith(itemPath);
   };
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 w-full z-40 transition-all duration-500 ${
-        scrolled 
-          ? 'glassmorphism-nav py-4 shadow-xl' 
-          : 'bg-transparent py-6 border-b border-transparent'
-      }`}>
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          {/* Brand Logo */}
-          <button 
+      <nav
+        className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ${
+          scrolled
+            ? 'bg-[#F5F1E8]/90 dark:bg-[#171916]/95 backdrop-blur-md py-3 shadow-[0_2px_12px_rgba(23,25,22,0.04)] border-b border-[#E5E1D7] dark:border-[#2E322C]'
+            : 'bg-[#F5F1E8]/75 dark:bg-[#171916]/80 backdrop-blur-sm py-4 border-b border-[#E5E1D7]/60 dark:border-[#2E322C]/60'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          {/* Brand Logo - Luxury Monogram Treatment */}
+          <button
             onClick={handleLogoClick}
-            className="flex items-center gap-2 text-left group"
+            className="flex items-center gap-3 text-left group focus:outline-none"
+            aria-label="Good Life Fitness AI Home"
           >
-            <div 
-              style={{ background: 'var(--accent-metallic)', borderRadius: 'var(--button-radius)' }}
-              className="w-10 h-10 flex items-center justify-center text-gym-black shadow-lg transition-transform duration-300 group-hover:scale-110"
-            >
-              <Dumbbell size={20} className="stroke-[2.5]" />
+            <div className="w-9 h-9 rounded-xl bg-[#173F35] flex items-center justify-center text-[#F5F1E8] shadow-sm transition-transform duration-300 group-hover:scale-105 border border-[#173F35]/20">
+              <Dumbbell size={18} className="stroke-[2.2] text-[#C6A66B]" />
             </div>
             <div>
-              <span className="block text-lg font-black font-display tracking-wider text-gym-black dark:text-white transition-colors duration-500">
+              <span className="block text-sm font-extrabold tracking-tight text-[#171916] dark:text-[#F5F1E8] leading-tight">
                 GOOD LIFE
               </span>
-              <span className="block text-[10px] font-semibold text-gym-gold dark:text-gym-silver tracking-[0.25em] -mt-1 flex items-center gap-0.5 transition-colors duration-500">
-                FITNESS <ShieldCheck size={10} className="fill-current stroke-current dark:stroke-gym-black" />
+              <span className="block text-[9px] font-semibold text-[#C6A66B] tracking-[0.22em] -mt-0.5 uppercase">
+                FITNESS AI
               </span>
             </div>
           </button>
 
-          {/* Desktop Menu Links */}
-          <div className="hidden lg:flex items-center gap-6">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => scrollToSection(item.id)}
-                className={`text-xs uppercase tracking-widest font-semibold font-display transition-all duration-300 ${
-                  activeSection === item.id 
-                    ? 'text-gym-gold dark:text-gym-silver font-black' 
-                    : 'text-gym-grey-muted hover:text-gym-black dark:hover:text-white'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+          {/* Desktop Navigation Links */}
+          <div className="hidden lg:flex items-center gap-7">
+            {navItems.map((item) => {
+              const active = isNavItemActive(item.path);
+              return (
+                <Link
+                  key={item.label}
+                  to={item.path}
+                  onClick={() => handleNavClick(item.path)}
+                  className={`text-[11px] uppercase tracking-[0.16em] font-semibold transition-colors duration-200 flex items-center gap-1.5 py-1 relative ${
+                    active
+                      ? 'text-[#173F35] dark:text-[#F5F1E8] font-bold'
+                      : 'text-[#85877F] hover:text-[#171916] dark:text-[#A8AAA3] dark:hover:text-[#F5F1E8]'
+                  }`}
+                >
+                  {item.label}
+                  {item.badge && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-[#173F35]/10 text-[#173F35] dark:bg-[#1F5144]/30 dark:text-[#C6A66B] text-[8.5px] font-bold tracking-wider">
+                      {item.badge}
+                    </span>
+                  )}
+                  {active && (
+                    <span className="absolute bottom-0 left-0 w-full h-[2px] bg-[#173F35] dark:bg-[#C6A66B] rounded-full" />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Action Call Buttons */}
-          <div className="hidden lg:flex items-center gap-4">
+          {/* Right Action Controls: Membership, Auth, Studio Launcher */}
+          <div className="hidden lg:flex items-center gap-3">
+            {/* Theme Toggle Button */}
             <button
-              onClick={handleBookTrial}
-              style={{ background: 'var(--accent-metallic)', borderRadius: 'var(--button-radius)' }}
-              className="text-gym-black font-display font-bold uppercase tracking-wider text-[11px] py-2.5 px-5 hover:scale-[1.03] transition-all duration-300 flex items-center gap-1.5 shadow-lg"
+              onClick={handleToggleTheme}
+              className="p-2 rounded-xl text-[#85877F] hover:text-[#171916] dark:text-[#A8AAA3] dark:hover:text-[#F5F1E8] hover:bg-[#EAE5D9]/50 dark:hover:bg-[#1E211D] transition"
+              title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
             >
-              Book Free Trial
-              <ArrowRight size={12} />
+              {isLight ? <Moon size={15} /> : <Sun size={15} />}
             </button>
+
+            {isAuthenticated ? (
+              <div className="flex items-center gap-2.5">
+                {/* Membership Badge or Upgrade Trigger */}
+                {isPremium ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#C6A66B]/15 border border-[#C6A66B]/40 text-[#A48449] dark:text-[#D8BF8F] text-[10px] font-bold uppercase tracking-wider">
+                    <Sparkles size={11} className="text-[#C6A66B]" />
+                    Private Member
+                  </span>
+                ) : (
+                  <button
+                    onClick={handleUpgrade}
+                    disabled={upgrading}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#C6A66B]/15 border border-[#C6A66B]/30 hover:border-[#C6A66B] text-[#A48449] dark:text-[#D8BF8F] hover:text-[#171916] text-[10px] font-bold uppercase tracking-wider transition"
+                    title="Unlock full AI pose tracking"
+                  >
+                    <Sparkles size={11} className="text-[#C6A66B]" />
+                    {upgrading ? 'Upgrading...' : 'Upgrade'}
+                  </button>
+                )}
+
+                <Link
+                  to="/profile"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FFFFFF] dark:bg-[#1E211D] border border-[#E5E1D7] dark:border-[#2E322C] text-[#171916] dark:text-[#F5F1E8] text-xs font-medium hover:border-[#173F35] transition shadow-xs"
+                >
+                  <User size={13} className="text-[#173F35] dark:text-[#C6A66B]" />
+                  <span>{user?.name?.split(' ')[0] || 'Profile'}</span>
+                </Link>
+
+                <button
+                  onClick={logout}
+                  className="p-2 rounded-xl text-[#85877F] hover:text-rose-600 hover:bg-[#EAE5D9]/50 dark:hover:bg-[#1E211D] transition"
+                  title="Sign Out"
+                >
+                  <LogOut size={14} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="text-xs font-semibold px-3.5 py-1.5 rounded-xl text-[#171916] dark:text-[#F5F1E8] hover:bg-[#EAE5D9]/60 dark:hover:bg-[#1E211D] transition border border-[#E5E1D7] dark:border-[#2E322C]"
+              >
+                Sign In
+              </button>
+            )}
+
+            {/* AI Studio Call to Action */}
+            <Link
+              to="/exercises"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#173F35] hover:bg-[#1F5144] text-[#F5F1E8] text-xs font-semibold transition shadow-sm tracking-wide border border-[#173F35]/20"
+            >
+              <Camera size={13} className="text-[#C6A66B]" />
+              AI Studio
+            </Link>
           </div>
 
           {/* Mobile Actions Hamburger Toggle */}
-          <div className="flex items-center gap-3 lg:hidden">
+          <div className="flex items-center gap-2 lg:hidden">
+            <button
+              onClick={handleToggleTheme}
+              className="p-2 rounded-xl text-[#85877F] hover:text-[#171916] dark:text-[#A8AAA3]"
+            >
+              {isLight ? <Moon size={16} /> : <Sun size={16} />}
+            </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="w-10 h-10 flex items-center justify-center text-gym-black dark:text-white hover:text-gym-gold dark:hover:text-gym-silver transition-colors"
-              aria-label="Toggle Menu"
+              className="p-2 rounded-xl text-[#171916] dark:text-[#F5F1E8] hover:bg-[#EAE5D9]/60 dark:hover:bg-[#1E211D] transition"
+              aria-label="Toggle Navigation Menu"
             >
-              {isOpen ? <X size={24} /> : <Menu size={24} />}
+              {isOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Menu Panel */}
+      {/* Mobile Drawer Panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 top-0 left-0 w-full h-screen bg-[#FAFAFA]/98 dark:bg-gym-black/98 z-30 lg:hidden flex flex-col justify-center px-8 border-b border-gym-border"
+            exit={{ opacity: 0, y: -10 }}
+            className="fixed inset-0 top-[64px] w-full bg-[#F5F1E8] dark:bg-[#171916] z-30 lg:hidden flex flex-col justify-start p-6 border-b border-[#E5E1D7] dark:border-[#2E322C] shadow-xl overflow-y-auto"
           >
-            <div className="space-y-6 text-center">
+            <div className="space-y-4">
               {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  className={`block w-full text-xl uppercase tracking-widest font-bold font-display transition-colors py-2 ${
-                    activeSection === item.id 
-                      ? 'text-gym-gold dark:text-gym-silver text-2xl scale-105 font-black' 
-                      : 'text-gym-grey-muted hover:text-gym-black dark:hover:text-white'
-                  }`}
+                <Link
+                  key={item.label}
+                  to={item.path}
+                  onClick={() => handleNavClick(item.path)}
+                  className="flex items-center justify-between text-base font-bold text-[#171916] dark:text-[#F5F1E8] py-2.5 border-b border-[#E5E1D7]/60 dark:border-[#2E322C]"
                 >
-                  {item.label}
-                </button>
+                  <span>{item.label}</span>
+                  {item.badge && (
+                    <span className="px-2 py-0.5 rounded-full bg-[#173F35]/10 text-[#173F35] dark:text-[#C6A66B] text-[10px] font-bold">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
               ))}
 
-              <div className="pt-8">
-                <button
-                  onClick={handleBookTrial}
-                  style={{ background: 'var(--accent-metallic)', borderRadius: 'var(--button-radius)' }}
-                  className="w-full max-w-xs mx-auto text-gym-black font-display font-bold uppercase tracking-widest text-sm py-4 flex items-center justify-center gap-2 shadow-lg"
+              <div className="pt-4 space-y-3">
+                {isAuthenticated ? (
+                  <>
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#FFFFFF] dark:bg-[#1E211D] border border-[#E5E1D7] dark:border-[#2E322C]">
+                      <div>
+                        <span className="text-xs font-bold text-[#171916] dark:text-[#F5F1E8] block">
+                          {user?.name}
+                        </span>
+                        <span className="text-[10px] text-[#85877F]">
+                          {isPremium ? 'Good Life Member' : 'Free Tier'}
+                        </span>
+                      </div>
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsOpen(false)}
+                        className="px-3 py-1 rounded-lg bg-[#173F35] text-[#F5F1E8] text-xs font-semibold"
+                      >
+                        Profile
+                      </Link>
+                    </div>
+
+                    {!isPremium && (
+                      <button
+                        onClick={() => {
+                          handleUpgrade();
+                          setIsOpen(false);
+                        }}
+                        className="w-full py-3 rounded-xl bg-[#C6A66B] text-[#171916] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
+                      >
+                        <Sparkles size={14} />
+                        Upgrade to Member
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsOpen(false);
+                      }}
+                      className="block w-full py-2.5 rounded-xl text-center text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      setIsAuthModalOpen(true);
+                    }}
+                    className="w-full py-3 rounded-xl bg-[#171916] dark:bg-[#FFFFFF] text-[#F5F1E8] dark:text-[#171916] text-xs font-bold"
+                  >
+                    Sign In to Account
+                  </button>
+                )}
+
+                <Link
+                  to="/exercises"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full py-3.5 rounded-xl bg-[#173F35] text-[#F5F1E8] text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
                 >
-                  Book Free Trial
-                  <ArrowRight size={16} />
-                </button>
+                  <Camera size={14} className="text-[#C6A66B]" />
+                  Start AI Workout Studio
+                </Link>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* User Authentication Modal */}
+      <UserAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </>
   );
 };

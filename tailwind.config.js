@@ -8,38 +8,92 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Luxury Performance Global Color System
+        obsidian: {
+          DEFAULT: '#171916',
+          dark: '#0F100E',
+          surface: '#1E211D',
+          hover: '#262924',
+        },
+        forest: {
+          DEFAULT: '#173F35',
+          dark: '#102B24',
+          light: '#1F5144',
+          muted: '#173F351A',
+        },
+        emerald: {
+          DEFAULT: '#26745A',
+          dark: '#1D5A46',
+          light: '#338F70',
+          soft: '#EAF4F0',
+        },
+        gold: {
+          DEFAULT: '#C6A66B',
+          light: '#D8BF8F',
+          dark: '#A48449',
+          muted: '#C6A66B26',
+        },
+        ivory: {
+          DEFAULT: '#F5F1E8',
+          light: '#FAF8F3',
+          dark: '#EAE5D9',
+        },
+        purewhite: '#FFFFFF',
+        stone: {
+          DEFAULT: '#85877F',
+          light: '#A8AAA3',
+          dark: '#5A5C55',
+          muted: '#85877F40',
+        },
+        'border-luxury': '#E5E1D7',
+
+        // Backward compatibility mappings
+        luxury: {
+          bg: '#F5F1E8',
+          card: '#FFFFFF',
+          text: '#171916',
+          secondary: '#85877F',
+          primary: '#173F35',
+          emerald: '#26745A',
+          accent: '#C6A66B',
+          border: '#E5E1D7',
+          hover: '#EDE9DE',
+          surface: '#FAF8F3',
+          obsidian: '#171916',
+        },
         gym: {
-          black: '#080808', // Matte black
-          dark: '#121212',
-          card: '#1A1A1E',
-          cardHover: '#222227',
-          border: '#2A2A30',
-          borderGold: '#E5C07B',
-          borderSilver: '#D1D5DB',
+          black: '#171916',
+          dark: '#171916',
+          card: '#FFFFFF',
+          cardHover: '#FAF8F3',
+          border: '#E5E1D7',
+          borderGold: '#C6A66B',
+          borderSilver: '#E5E1D7',
           gold: {
-            light: '#F5E3B5',
-            DEFAULT: '#D4AF37', // Classic metallic gold
-            dark: '#AA7C11',
-            deep: '#835F0C',
-            accent: '#FFD700', // Bright gold
+            light: '#D8BF8F',
+            DEFAULT: '#C6A66B',
+            dark: '#A48449',
+            deep: '#8C6E38',
+            accent: '#C6A66B',
           },
           silver: {
-            light: '#F3F4F6',
-            DEFAULT: '#C0C0C0', // Classic metallic silver
-            dark: '#9CA3AF',
-            deep: '#4B5563',
-            accent: '#FFFFFF', // White chrome highlights
+            light: '#FAF8F3',
+            DEFAULT: '#85877F',
+            dark: '#5A5C55',
+            deep: '#171916',
+            accent: '#FFFFFF',
           },
           grey: {
-            muted: 'var(--text-muted, #8E8E93)',
-            secondary: 'var(--text-secondary, #4A4A4F)',
-            light: '#E5E5EA',
+            muted: '#85877F',
+            secondary: '#5A5C55',
+            light: '#E5E1D7',
           }
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['Outfit', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+        editorial: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        display: ['Outfit', '"Plus Jakarta Sans"', 'sans-serif'],
       },
       animation: {
         'pulse-glow': 'pulse-glow 5s ease-in-out infinite',

@@ -1,201 +1,207 @@
-import React, { useState, useContext } from 'react';
-import { Check, Star, ShieldCheck, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, Star, ShieldCheck, Sparkles, ArrowRight, Zap, X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { ContentContext } from '../context/ContentContext';
-import { analyticsTracker } from '../utils/analytics';
-
-const PricingCard = ({ plan, cycle, onSelect, isPopular }) => {
-  let price = plan.priceMonthly;
-  let periodLabel = '/ mo';
-  let equivalentMonthly = plan.priceMonthly;
-  let savingsText = '';
-
-  if (cycle === 'quarterly') {
-    price = plan.priceQuarterly;
-    periodLabel = '/ quarter';
-    equivalentMonthly = Math.round(plan.priceQuarterly / 3);
-    const baseCost = plan.priceMonthly * 3;
-    const discount = Math.round((1 - plan.priceQuarterly / baseCost) * 100);
-    if (discount > 0) savingsText = `Save ${discount}%`;
-  } else if (cycle === 'yearly') {
-    price = plan.priceYearly;
-    periodLabel = '/ yr';
-    equivalentMonthly = Math.round(plan.priceYearly / 12);
-    const baseCost = plan.priceMonthly * 12;
-    const discount = Math.round((1 - plan.priceYearly / baseCost) * 100);
-    if (discount > 0) savingsText = `Save ${discount}%`;
-  }
-
-  return (
-    <motion.div
-      whileHover={{ y: -6 }}
-      transition={{ duration: 0.3 }}
-      style={{ borderRadius: 'var(--button-radius)' }}
-      className={`relative flex flex-col justify-between p-8 glass-brand transition-all duration-300 h-full ${
-        isPopular 
-          ? 'border-gym-gold dark:border-gym-silver shadow-xl shadow-gym-gold/5 dark:shadow-gym-silver/5 scale-100 lg:scale-[1.03]' 
-          : 'hover:border-gym-gold/30 dark:hover:border-white/10'
-      }`}
-    >
-      {isPopular && (
-        <div 
-          style={{ borderRadius: 'var(--button-radius)' }}
-          className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gold-metallic-gradient dark:bg-silver-metallic-gradient text-gym-black text-[9px] font-black uppercase tracking-[0.2em] px-4 py-1.5 flex items-center gap-1 shadow-lg shadow-gym-gold/20 dark:shadow-gym-silver/20 transition-all duration-1000"
-        >
-          <Star size={10} className="fill-current" />
-          Recommended Tier
-        </div>
-      )}
-
-
-      {/* Pricing Header */}
-      <div className="space-y-4">
-        <div>
-          <span className="text-[10px] uppercase font-bold text-gym-gold dark:text-gym-silver tracking-widest block mb-1 transition-colors duration-1000">
-            {plan.tagline}
-          </span>
-          <h3 className="text-xl font-black font-display uppercase tracking-wider text-gym-black dark:text-white transition-colors duration-1000">
-            {plan.name}
-          </h3>
-        </div>
-
-        <div className="space-y-1">
-          <div className="flex items-baseline gap-1">
-            <span className="text-sm font-semibold text-gym-gold dark:text-gym-silver transition-colors duration-1000">₹</span>
-            <span className="text-4xl md:text-5xl font-black font-display text-gym-black dark:text-white tracking-tight transition-colors duration-1000">
-              {price.toLocaleString('en-IN')}
-            </span>
-            <span className="text-xs text-gym-grey-secondary lowercase font-medium transition-colors duration-1000">{periodLabel}</span>
-          </div>
-          
-          {cycle !== 'monthly' && (
-            <div className="flex items-center gap-2 pt-0.5">
-              <span className="text-[10px] text-gym-grey-muted font-semibold uppercase tracking-wider">
-                Equivalent to ₹{equivalentMonthly.toLocaleString('en-IN')}/mo
-              </span>
-              {savingsText && (
-                <span className="text-[9px] uppercase font-black text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 border border-green-200 dark:border-green-900/40">
-                  {savingsText}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-
-        <p className="text-xs text-gym-grey-secondary leading-relaxed font-medium pt-2 transition-colors duration-1000">
-          {plan.desc}
-        </p>
-
-        {/* Feature List */}
-        <div className="space-y-3 pt-6 border-t border-gym-gold/20 dark:border-gym-border/40 transition-colors duration-1000">
-          {plan.features.map((feat, idx) => (
-            <div key={idx} className="flex items-start gap-2.5 text-xs leading-tight transition-colors duration-1000">
-              <Check size={14} className="text-gym-gold dark:text-gym-silver flex-shrink-0 mt-0.5 transition-colors duration-1000" />
-              <span className="text-gym-grey-secondary font-medium transition-colors duration-1000">{feat}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* CTA Button */}
-      <div className="pt-8 mt-auto">
-        <button
-          onClick={() => onSelect(plan.name, price, cycle)}
-          style={{ borderRadius: 'var(--button-radius)' }}
-          className={`w-full py-3.5 font-display font-bold uppercase text-[10px] tracking-widest transition-all duration-500 flex items-center justify-center gap-2 ${
-            isPopular 
-              ? 'bg-gold-metallic-gradient dark:bg-silver-metallic-gradient text-gym-black shadow-lg shadow-gym-gold/15 dark:shadow-gym-silver/15 hover:scale-[1.02]' 
-              : 'bg-gym-gold/10 hover:bg-gym-gold dark:bg-white/5 dark:hover:bg-white border border-gym-gold/30 hover:border-gym-gold dark:border-white/10 dark:hover:border-white text-gym-gold hover:text-gym-black dark:text-white dark:hover:text-gym-black'
-          }`}
-        >
-          {plan.btnText}
-        </button>
-      </div>
-    </motion.div>
-  );
-};
+import { useAuth } from '../context/AuthContext';
 
 const Pricing = () => {
-  const { content } = useContext(ContentContext);
-  const [cycle, setCycle] = useState('monthly'); // monthly, quarterly, yearly
+  const { user, isPremium, upgradeToPremium, isAuthenticated } = useAuth();
+  const [upgrading, setUpgrading] = useState(false);
+  const [cycle, setCycle] = useState('monthly'); // 'monthly' | 'yearly'
 
-  const plans = content.pricing;
-  const contactInfo = content.contact;
-
-  const handleSelectPlan = (name, price, activeCycle) => {
-    analyticsTracker.track('whatsapp_click', { 
-      source: 'Pricing Card', 
-      plan: name, 
-      cycle: activeCycle 
-    });
-    const cycleNames = {
-      monthly: 'Monthly',
-      quarterly: 'Quarterly',
-      yearly: 'Yearly'
-    };
-    const text = encodeURIComponent(`Hello Good Life Fitness! I'm interested in booking the "${name}" (${cycleNames[activeCycle]} Membership) priced at ₹${price.toLocaleString('en-IN')}. Please guide me on signup.`);
-    window.open(`https://wa.me/${contactInfo.whatsApp}?text=${text}`, '_blank');
+  const handleUpgrade = async () => {
+    setUpgrading(true);
+    try {
+      await upgradeToPremium();
+    } catch (err) {
+      console.error('Upgrade failed:', err);
+    } finally {
+      setUpgrading(false);
+    }
   };
 
   return (
-    <section id="pricing" className="relative py-24 bg-gym-gold/[0.01] dark:bg-gym-dark/20 border-b border-gym-gold/10 dark:border-b-gym-border transition-colors duration-1000">
-      {/* Glow flares */}
-      <div className="absolute top-0 right-0 w-[35vw] h-[35vw] bg-gym-gold-dark/5 dark:bg-gym-silver-dark/5 rounded-full filter blur-[120px] pointer-events-none transition-colors duration-1000" />
-
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+    <section id="pricing" className="py-24 bg-[#F5F1E8] dark:bg-[#171916] border-t border-[#E5E1D7] dark:border-[#2E322C] transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Section Header */}
-        <div className="text-center space-y-3 mb-12">
-          <h4 className="text-xs font-bold font-display text-gym-gold dark:text-gym-silver uppercase tracking-[0.25em] transition-colors duration-1000">
-            MEMBERSHIP TIERS
-          </h4>
-          <h2 className="text-3xl md:text-5xl font-black font-display uppercase tracking-tight text-gym-black dark:text-white transition-colors duration-1000">
-            INVEST IN <span className="text-brand-gradient">YOUR LEGACY</span>
+        {/* Header */}
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#173F35]/10 dark:bg-[#173F35]/25 border border-[#173F35]/20 dark:border-[#26745A]/30 text-[#173F35] dark:text-[#C6A66B] text-[10px] font-bold tracking-[0.2em] uppercase mb-3">
+            <Sparkles className="w-3.5 h-3.5 text-[#C6A66B]" />
+            Transparent Memberships
+          </div>
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-[#171916] dark:text-[#F5F1E8] tracking-tight font-display">
+            Entitlement Architecture
           </h2>
-          <p className="text-xs md:text-sm text-gym-grey-secondary max-w-xl mx-auto font-medium transition-colors duration-1000">
-            Flexible premium memberships with transparent pricing. Zero hidden charges. Focus entirely on your physique.
+          <p className="mt-2 text-xs sm:text-sm text-[#85877F] dark:text-[#A8AAA3]">
+            No hidden clauses. Free diagnostics for all visitors, with full computer vision telemetry reserved for verified members.
           </p>
-        </div>
 
-        {/* Pricing Duration Toggle Switch - 3 Segment Tab Switcher */}
-        <div className="flex items-center justify-center mb-16 select-none">
-          <div 
-            style={{ borderRadius: 'var(--button-radius)' }}
-            className="flex bg-gym-gold/5 dark:bg-gym-card border border-gym-gold/20 dark:border-gym-border p-1"
-          >
-            {[
-              { id: 'monthly', label: 'Monthly' },
-              { id: 'quarterly', label: 'Quarterly' },
-              { id: 'yearly', label: 'Yearly' }
-            ].map((segment) => (
-              <button
-                key={segment.id}
-                onClick={() => setCycle(segment.id)}
-                style={{ borderRadius: 'var(--button-radius)' }}
-                className={`px-6 py-2 text-xs uppercase tracking-widest font-black transition-all duration-300 ${
-                  cycle === segment.id
-                    ? 'bg-gym-gold dark:bg-gym-silver text-gym-black shadow-md'
-                    : 'text-gym-grey-muted hover:text-gym-black dark:hover:text-white'
-                }`}
-              >
-                {segment.label}
-              </button>
-            ))}
+          {/* Billing Switch */}
+          <div className="mt-6 inline-flex p-1 rounded-xl bg-[#FFFFFF] dark:bg-[#1E211D] border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs">
+            <button
+              onClick={() => setCycle('monthly')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+                cycle === 'monthly'
+                  ? 'bg-[#173F35] text-[#F5F1E8]'
+                  : 'text-[#85877F]'
+              }`}
+            >
+              Monthly Billing
+            </button>
+            <button
+              onClick={() => setCycle('yearly')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5 ${
+                cycle === 'yearly'
+                  ? 'bg-[#173F35] text-[#F5F1E8]'
+                  : 'text-[#85877F]'
+              }`}
+            >
+              <span>Annual Billing</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#C6A66B] text-[#171916] font-extrabold">Save 25%</span>
+            </button>
           </div>
         </div>
 
-        {/* Pricing Tiers Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-          {plans.map((plan, index) => (
-            <PricingCard
-              key={index}
-              plan={plan}
-              cycle={cycle}
-              isPopular={plan.highlighted !== undefined ? plan.highlighted : index === 1}
-              onSelect={handleSelectPlan}
-            />
-          ))}
+        {/* 2-Tier Comparison Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
+          
+          {/* TIER 1: FREE SANCTUARY ACCESS */}
+          <div className="bg-[#FFFFFF] dark:bg-[#1E211D] rounded-3xl p-8 sm:p-10 border border-[#E5E1D7] dark:border-[#2E322C] shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#85877F]">
+                  Public Access
+                </span>
+                <span className="px-2.5 py-1 rounded-full bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C] text-[10px] font-bold text-[#85877F] uppercase tracking-wider">
+                  Complimentary
+                </span>
+              </div>
+
+              <h3 className="text-2xl font-bold font-display text-[#171916] dark:text-[#F5F1E8]">
+                Sanctuary Guest
+              </h3>
+              <p className="text-xs text-[#85877F] dark:text-[#A8AAA3] mt-2 mb-6">
+                Foundational movement guidance, whole-food dietary consultation, and open biometric health calculators.
+              </p>
+
+              <div className="flex items-baseline gap-1 mb-8">
+                <span className="text-4xl font-black font-display text-[#171916] dark:text-[#F5F1E8]">
+                  $0
+                </span>
+                <span className="text-xs text-[#85877F]">/ month, forever</span>
+              </div>
+
+              {/* Feature Checklist */}
+              <div className="space-y-3 pt-6 border-t border-[#E5E1D7] dark:border-[#2E322C]">
+                {[
+                  { title: 'Full 24-Exercise Biomechanical Catalog', included: true },
+                  { title: 'Public Biometric BMI Calculator & Classification', included: true },
+                  { title: 'Rule-Based Daily Meal Blueprint Generator', included: true },
+                  { title: 'Manual Step-by-Step Movement Guidance', included: true },
+                  { title: 'Real-Time Webcam Pose Tracking', included: false },
+                  { title: 'Automated Repetition Counter & Form Checks', included: false },
+                  { title: 'MongoDB Cloud Session History & Telemetry', included: false },
+                  { title: '7-Day Meal Logistics & Shopping Schedules', included: false },
+                ].map((feat, idx) => (
+                  <div key={idx} className="flex items-start gap-3 text-xs leading-normal">
+                    {feat.included ? (
+                      <Check size={15} className="text-[#26745A] shrink-0 mt-0.5" />
+                    ) : (
+                      <X size={15} className="text-[#85877F]/50 shrink-0 mt-0.5" />
+                    )}
+                    <span className={feat.included ? 'text-[#171916] dark:text-[#F5F1E8] font-medium' : 'text-[#85877F]/60'}>
+                      {feat.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-[#E5E1D7] dark:border-[#2E322C]">
+              <span className="block text-center text-xs font-semibold text-[#85877F]">
+                Included with any registered visitor account
+              </span>
+            </div>
+          </div>
+
+          {/* TIER 2: PRIVATE MEMBER */}
+          <div className="bg-[#173F35] text-[#F5F1E8] rounded-3xl p-8 sm:p-10 border border-[#26745A]/50 shadow-xl relative flex flex-col justify-between">
+            {/* Top Recommended Tag */}
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#C6A66B] text-[#171916] text-[9px] font-extrabold uppercase tracking-[0.2em] shadow-sm flex items-center gap-1">
+              <Star size={10} className="fill-current" />
+              Private Performance
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4 mt-1">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C6A66B]">
+                  Full Access Studio
+                </span>
+                <span className="px-2.5 py-1 rounded-full bg-[#102B24] border border-[#26745A]/40 text-[10px] font-bold text-[#C6A66B] uppercase tracking-wider">
+                  Authoritative
+                </span>
+              </div>
+
+              <h3 className="text-2xl font-bold font-display text-white">
+                Good Life Member
+              </h3>
+              <p className="text-xs text-[#FAF8F3]/70 mt-2 mb-6">
+                Client-side computer vision pose estimation, automated repetition counts, form feedback alerts, and cloud telemetry.
+              </p>
+
+              <div className="flex items-baseline gap-1 mb-8">
+                <span className="text-4xl font-black font-display text-white">
+                  {cycle === 'monthly' ? '$29' : '$22'}
+                </span>
+                <span className="text-xs text-[#FAF8F3]/70">
+                  / month {cycle === 'yearly' && '(billed $264 annually)'}
+                </span>
+              </div>
+
+              {/* Feature Checklist */}
+              <div className="space-y-3 pt-6 border-t border-[#26745A]/40">
+                {[
+                  { title: 'Everything in Sanctuary Guest Tier', included: true },
+                  { title: 'MediaPipe 33-Landmark Pose Estimation (30 FPS)', included: true },
+                  { title: 'Computer Vision Repetition Counting (Squats, Push-Ups, Lunges)', included: true },
+                  { title: 'Continuous Isometric Hold Timer (Plank)', included: true },
+                  { title: 'Real-Time Biomechanical Form Angle Feedback Alerts', included: true },
+                  { title: 'Authoritative MongoDB Workout Session History', included: true },
+                  { title: 'Body Measurement & Weight Progression Analytics', included: true },
+                  { title: '7-Day Meal Logistics & Consolidated Shopping Blueprints', included: true },
+                ].map((feat, idx) => (
+                  <div key={idx} className="flex items-start gap-3 text-xs leading-normal">
+                    <Check size={15} className="text-[#C6A66B] shrink-0 mt-0.5" />
+                    <span className="text-[#F5F1E8] font-medium">
+                      {feat.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-[#26745A]/40">
+              {isPremium ? (
+                <div className="w-full py-3.5 rounded-xl bg-[#102B24] border border-[#26745A]/50 text-[#C6A66B] text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center gap-2">
+                  <ShieldCheck size={15} />
+                  Your Active Membership Tier
+                </div>
+              ) : (
+                <button
+                  onClick={handleUpgrade}
+                  disabled={upgrading}
+                  className="w-full py-3.5 rounded-xl bg-[#C6A66B] hover:bg-[#D8BF8F] text-[#171916] text-xs font-bold uppercase tracking-[0.16em] transition shadow-md flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  <Sparkles size={14} />
+                  {upgrading ? 'Processing...' : 'Upgrade to Member ($29/mo)'}
+                  <ArrowRight size={13} />
+                </button>
+              )}
+            </div>
+          </div>
+
         </div>
+
       </div>
     </section>
   );
