@@ -175,23 +175,11 @@ const Navbar = ({ theme, onAdminTrigger }) => {
 
             {isAuthenticated ? (
               <div className="flex items-center gap-2.5">
-                {/* Membership Badge or Upgrade Trigger */}
-                {isPremium ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#C6A66B]/15 border border-[#C6A66B]/40 text-[#A48449] dark:text-[#D8BF8F] text-[10px] font-bold uppercase tracking-wider">
-                    <Sparkles size={11} className="text-[#C6A66B]" />
-                    Private Member
-                  </span>
-                ) : (
-                  <button
-                    onClick={handleUpgrade}
-                    disabled={upgrading}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#C6A66B]/15 border border-[#C6A66B]/30 hover:border-[#C6A66B] text-[#A48449] dark:text-[#D8BF8F] hover:text-[#171916] text-[10px] font-bold uppercase tracking-wider transition"
-                    title="Unlock full AI pose tracking"
-                  >
-                    <Sparkles size={11} className="text-[#C6A66B]" />
-                    {upgrading ? 'Upgrading...' : 'Upgrade'}
-                  </button>
-                )}
+                {/* Membership Badge */}
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#173F35]/10 border border-[#173F35]/25 text-[#173F35] dark:text-[#C6A66B] text-[10px] font-bold uppercase tracking-wider">
+                  <Sparkles size={11} className="text-[#C6A66B]" />
+                  AI Athlete
+                </span>
 
                 <Link
                   to="/profile"
@@ -281,8 +269,8 @@ const Navbar = ({ theme, onAdminTrigger }) => {
                         <span className="text-xs font-bold text-[#171916] dark:text-[#F5F1E8] block">
                           {user?.name}
                         </span>
-                        <span className="text-[10px] text-[#85877F]">
-                          {isPremium ? 'Good Life Member' : 'Free Tier'}
+                        <span className="text-[10px] font-bold text-[#173F35] dark:text-[#C6A66B]">
+                          AI Athlete (Free Access)
                         </span>
                       </div>
                       <Link
@@ -293,19 +281,6 @@ const Navbar = ({ theme, onAdminTrigger }) => {
                         Profile
                       </Link>
                     </div>
-
-                    {!isPremium && (
-                      <button
-                        onClick={() => {
-                          handleUpgrade();
-                          setIsOpen(false);
-                        }}
-                        className="w-full py-3 rounded-xl bg-[#C6A66B] text-[#171916] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
-                      >
-                        <Sparkles size={14} />
-                        Upgrade to Member
-                      </button>
-                    )}
 
                     <button
                       onClick={() => {

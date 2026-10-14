@@ -2,569 +2,564 @@ import React, { useState, useEffect } from 'react';
 import { 
   Apple, 
   Sparkles, 
-  Lock, 
   Check, 
   ShoppingBag, 
   Calendar, 
   ShieldCheck, 
   Clock, 
-  ArrowRight,
-  Flame,
-  AlertCircle,
-  Save,
-  Trash2,
-  Bookmark,
-  RefreshCw
+  Flame, 
+  Droplet,
+  Utensils,
+  Layers,
+  Leaf,
+  CheckCircle2,
+  ChevronRight,
+  Info
 } from 'lucide-react';
-import api from '../services/api';
+import { 
+  DIET_BUILDING_BLOCKS, 
+  WEEKLY_DIET_SCHEDULE, 
+  CONSOLIDATED_GROCERY_LIST, 
+  HYDRATION_BLUEPRINT,
+  generateClientDietPlan 
+} from '../services/dietPlannerService';
 import storageService from '../services/storageService';
-import { useAuth } from '../context/AuthContext';
 
 const DietPlans = () => {
-  const { user, isPremium, upgradeToPremium, isAuthenticated } = useAuth();
-
-  // Active view tab: 'daily' | 'saved' | 'weekly'
+  // Navigation tabs: 'daily' | 'weekly' | 'grocery' | 'hydration'
   const [activeTab, setActiveTab] = useState('daily');
 
-  // Preferences from storageService or defaults
-  const savedPref = storageService.getItem('preferences:diet', {
+  // Preferences from storageService or default
+  const savedPref = storageService.getItem('preferences:diet_clean', {
     goal: 'muscle_building',
     dietType: 'veg',
-    allergies: [],
-    cuisine: 'Indian',
   });
 
   const [goal, setGoal] = useState(savedPref.goal || 'muscle_building');
   const [dietType, setDietType] = useState(savedPref.dietType || 'veg');
-  const [allergies, setAllergies] = useState(savedPref.allergies || []);
-  const [cuisine, setCuisine] = useState(savedPref.cuisine || 'Indian');
 
-  const [dailyPlan, setDailyPlan] = useState(null);
-  const [premiumPlan, setPremiumPlan] = useState(null);
-  const [savedPlans, setSavedPlans] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [savingPlan, setSavingPlan] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [error, setError] = useState(null);
-
-  // Fetch free daily diet plan
-  const fetchDailyPlan = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.post('/diet/generate', {
-        fitnessGoal: goal,
-        dietaryPreference: dietType,
-        allergies,
-        cuisine,
-      });
-      if (res.success && res.data) {
-        setDailyPlan(res.data);
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to generate nutrition blueprint');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch premium weekly diet plan
-  const fetchWeeklyPlan = async () => {
-    if (!isPremium) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.post('/diet/premium-plan', {
-        fitnessGoal: goal,
-        dietaryPreference: dietType,
-        allergies,
-        cuisine,
-      });
-      if (res.success && res.data) {
-        setPremiumPlan(res.data);
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to load weekly schedule');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch saved plans for authenticated user
-  const fetchSavedPlans = async () => {
-    if (!isAuthenticated) return;
-    try {
-      const res = await api.get('/diet/plans');
-      if (res.success && res.data) {
-        setSavedPlans(res.data);
-      }
-    } catch (err) {
-      console.warn('Failed to load saved diet plans:', err.message);
-    }
-  };
+  // Client-generated plan state
+  const [plan, setPlan] = useState(() => {
+    return generateClientDietPlan({ fitnessGoal: goal, dietaryPreference: dietType });
+  });
 
   useEffect(() => {
-    storageService.setItem('preferences:diet', { goal, dietType, allergies, cuisine });
-    if (activeTab === 'daily') {
-      fetchDailyPlan();
-    } else if (activeTab === 'weekly' && isPremium) {
-      fetchWeeklyPlan();
-    } else if (activeTab === 'saved' && isAuthenticated) {
-      fetchSavedPlans();
-    }
-  }, [goal, dietType, allergies, cuisine, activeTab, isPremium, isAuthenticated]);
+    storageService.setItem('preferences:diet_clean', { goal, dietType });
+    const newPlan = generateClientDietPlan({ fitnessGoal: goal, dietaryPreference: dietType });
+    setPlan(newPlan);
+  }, [goal, dietType]);
 
-  const toggleAllergy = (allergen) => {
-    setAllergies((prev) =>
-      prev.includes(allergen) ? prev.filter((a) => a !== allergen) : [...prev, allergen]
-    );
-  };
+  const goals = [
+    { id: 'muscle_building', label: 'Muscle Hypertrophy', desc: 'High protein (+250 kcal surplus)' },
+    { id: 'fat_loss', label: 'Lean Fat Loss', desc: 'Thermogenic deficit (-350 kcal)' },
+    { id: 'endurance', label: 'Athletic Durability', desc: 'Complex glycogen fueling' },
+  ];
 
-  const handleSavePlan = async () => {
-    if (!isAuthenticated || !dailyPlan) return;
-    setSavingPlan(true);
-    setSaveSuccess(false);
-    setError(null);
-
-    try {
-      const payload = {
-        planName: `${dietType.toUpperCase()} ${goal.replace('_', ' ').toUpperCase()} Blueprint`,
-        fitnessGoal: goal,
-        dietaryPreference: dietType,
-        allergies,
-        cuisine,
-        dailyCaloricTarget: dailyPlan.targetCalories || 2200,
-        macronutrientDistribution: {
-          proteinGrams: dailyPlan.macros?.protein || 130,
-          carbsGrams: dailyPlan.macros?.carbs || 220,
-          fatGrams: dailyPlan.macros?.fat || 55,
-        },
-        mealBreakdown: [
-          {
-            mealName: 'Breakfast',
-            scheduledTime: '08:00 AM',
-            items: [dailyPlan.meals?.breakfast],
-            totalMealCalories: dailyPlan.meals?.breakfast?.cals || 380,
-          },
-          {
-            mealName: 'Lunch',
-            scheduledTime: '01:00 PM',
-            items: [dailyPlan.meals?.lunch],
-            totalMealCalories: dailyPlan.meals?.lunch?.cals || 540,
-          },
-          {
-            mealName: 'Evening Snack',
-            scheduledTime: '05:00 PM',
-            items: [dailyPlan.meals?.snack],
-            totalMealCalories: dailyPlan.meals?.snack?.cals || 220,
-          },
-          {
-            mealName: 'Dinner',
-            scheduledTime: '08:30 PM',
-            items: [dailyPlan.meals?.dinner],
-            totalMealCalories: dailyPlan.meals?.dinner?.cals || 450,
-          },
-        ].filter((m) => m.items[0]),
-        hydrationRecommendationLiters: 3.2,
-      };
-
-      const res = await api.post('/diet/plans', payload);
-      if (res.success) {
-        setSaveSuccess(true);
-        fetchSavedPlans();
-        setTimeout(() => setSaveSuccess(false), 4000);
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to save diet plan to MongoDB.');
-    } finally {
-      setSavingPlan(false);
-    }
-  };
-
-  const handleDeleteSavedPlan = async (planId) => {
-    try {
-      await api.delete(`/diet/plans/${planId}`);
-      setSavedPlans((prev) => prev.filter((p) => p._id !== planId));
-    } catch (err) {
-      setError(err.message || 'Failed to delete plan.');
-    }
-  };
+  const dietTypes = [
+    { id: 'veg', label: 'Vegetarian', icon: '🥗' },
+    { id: 'vegan', label: 'Vegan (Plant-Based)', icon: '🌱' },
+    { id: 'nonveg', label: 'High-Protein Non-Veg', icon: '🍗' },
+    { id: 'jain', label: 'Jain (No Onion/Garlic)', icon: '🥣' },
+  ];
 
   return (
-    <section id="diet" className="py-24 bg-[#FAF8F3] dark:bg-[#1A1D19] border-t border-[#E5E1D7] dark:border-[#2E322C] transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="diet" className="py-24 bg-[#F5F1E8] dark:bg-[#171916] text-[#171916] dark:text-[#F5F1E8] relative overflow-hidden transition-colors border-t border-[#E5E1D7] dark:border-[#2E322C]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#173F35]/10 dark:bg-[#173F35]/25 border border-[#173F35]/20 dark:border-[#26745A]/30 text-[#173F35] dark:text-[#C6A66B] text-[10px] font-bold tracking-[0.2em] uppercase mb-3">
+        {/* Header Section */}
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#173F35]/10 dark:bg-[#173F35]/25 border border-[#173F35]/20 dark:border-[#26745A]/30 text-[#173F35] dark:text-[#C6A66B] text-[10px] font-bold tracking-[0.2em] uppercase mb-3">
             <Apple className="w-3.5 h-3.5 text-[#C6A66B]" />
-            Clinical Nutrition Architecture
+            Clean Nutrition & Diet Engine
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#171916] dark:text-[#F5F1E8] tracking-tight font-display">
-            Personalized Dietary Consultation
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-[#171916] dark:text-[#F5F1E8] tracking-tight font-display">
+            Science-Backed Diet Blueprints
           </h2>
-          <p className="mt-2 text-xs sm:text-sm text-[#85877F] dark:text-[#A8AAA3]">
-            Calibrated macronutrient targets and authentic whole-food Indian nutrition engineered for hypertrophy, metabolic acceleration, and longevity.
+          <p className="mt-3 text-xs sm:text-sm text-[#85877F] dark:text-[#A8AAA3] leading-relaxed">
+            Whole-food nutrition blueprints calibrated to your metabolic demands. Exact meal portions, ingredients lists, macronutrient targets, and 7-day culinary logistics.
           </p>
-        </div>
 
-        {/* View Switcher Tabs */}
-        <div className="flex justify-center mb-10">
-          <div className="inline-flex p-1 rounded-xl bg-[#FFFFFF] dark:bg-[#1E211D] border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs">
-            <button
-              onClick={() => setActiveTab('daily')}
-              className={`px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-                activeTab === 'daily'
-                  ? 'bg-[#173F35] text-[#F5F1E8] shadow-xs'
-                  : 'text-[#85877F] hover:text-[#171916] dark:hover:text-[#F5F1E8]'
-              }`}
-            >
-              Daily Blueprint (Free)
-            </button>
-            <button
-              onClick={() => setActiveTab('saved')}
-              className={`px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-                activeTab === 'saved'
-                  ? 'bg-[#173F35] text-[#F5F1E8] shadow-xs'
-                  : 'text-[#85877F] hover:text-[#171916] dark:hover:text-[#F5F1E8]'
-              }`}
-            >
-              Saved Blueprints {isAuthenticated && `(${savedPlans.length})`}
-            </button>
-            <button
-              onClick={() => setActiveTab('weekly')}
-              className={`px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5 ${
-                activeTab === 'weekly'
-                  ? 'bg-[#173F35] text-[#F5F1E8] shadow-xs'
-                  : 'text-[#85877F] hover:text-[#171916] dark:hover:text-[#F5F1E8]'
-              }`}
-            >
-              <span>Weekly Logistics</span>
-              {!isPremium && <Lock size={11} className="text-[#C6A66B]" />}
-            </button>
+          {/* Navigation Tabs Bar */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-2 p-1.5 rounded-2xl bg-[#FFFFFF] dark:bg-[#1E211D] border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs max-w-xl mx-auto">
+            {[
+              { id: 'daily', label: 'Daily Meal Breakdown', icon: Utensils },
+              { id: 'weekly', label: '7-Day Rotation', icon: Calendar },
+              { id: 'grocery', label: 'Grocery Checklist', icon: ShoppingBag },
+              { id: 'hydration', label: 'Hydration Guide', icon: Droplet },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition ${
+                    activeTab === tab.id
+                      ? 'bg-[#173F35] text-[#F5F1E8] shadow-xs'
+                      : 'text-[#85877F] hover:text-[#171916] dark:hover:text-[#F5F1E8]'
+                  }`}
+                >
+                  <Icon size={14} className={activeTab === tab.id ? 'text-[#C6A66B]' : ''} />
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Preferences Consultation Bar */}
-        <div className="bg-[#FFFFFF] dark:bg-[#1E211D] rounded-2xl border border-[#E5E1D7] dark:border-[#2E322C] p-6 shadow-xs mb-10">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Dietary Preferences Selectors */}
+        <div className="bg-[#FFFFFF] dark:bg-[#1E211D] p-6 sm:p-8 rounded-3xl border border-[#E5E1D7] dark:border-[#2E322C] shadow-sm mb-12">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            {/* Goal */}
+            {/* Goal Selector */}
             <div>
-              <label className="block text-[10.5px] uppercase font-bold text-[#85877F] dark:text-[#A8AAA3] tracking-wider mb-2">
-                Primary Athletic Goal
-              </label>
-              <select
-                value={goal}
-                onChange={(e) => setGoal(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C] text-[#171916] dark:text-[#F5F1E8] text-xs font-semibold focus:outline-none focus:border-[#173F35]"
-              >
-                <option value="muscle_building">Muscle Hypertrophy & Strength</option>
-                <option value="fat_loss">Fat Loss & Metabolic Definition</option>
-                <option value="general_fitness">General Durability & Health</option>
-                <option value="endurance">Endurance & Cardiovascular Capacity</option>
-              </select>
-            </div>
-
-            {/* Dietary Type */}
-            <div>
-              <label className="block text-[10.5px] uppercase font-bold text-[#85877F] dark:text-[#A8AAA3] tracking-wider mb-2">
-                Dietary Framework
-              </label>
-              <select
-                value={dietType}
-                onChange={(e) => setDietType(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C] text-[#171916] dark:text-[#F5F1E8] text-xs font-semibold focus:outline-none focus:border-[#173F35]"
-              >
-                <option value="veg">Vegetarian (Lacto-Vegetarian)</option>
-                <option value="nonveg">High-Protein Non-Vegetarian</option>
-                <option value="vegan">100% Plant-Based Vegan</option>
-                <option value="jain">Jain (No Root Vegetables / Onion / Garlic)</option>
-              </select>
-            </div>
-
-            {/* Cuisine */}
-            <div>
-              <label className="block text-[10.5px] uppercase font-bold text-[#85877F] dark:text-[#A8AAA3] tracking-wider mb-2">
-                Cuisine Profile
-              </label>
-              <select
-                value={cuisine}
-                onChange={(e) => setCuisine(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C] text-[#171916] dark:text-[#F5F1E8] text-xs font-semibold focus:outline-none focus:border-[#173F35]"
-              >
-                <option value="Indian">Regional Indian Whole Foods</option>
-                <option value="Mediterranean">Mediterranean & Olive Oil</option>
-                <option value="Continental">Clean Continental Macro Bowl</option>
-              </select>
-            </div>
-
-            {/* Allergies & Restrictions */}
-            <div>
-              <label className="block text-[10.5px] uppercase font-bold text-[#85877F] dark:text-[#A8AAA3] tracking-wider mb-2">
-                Exclude Allergens
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {['dairy', 'nuts', 'gluten', 'soy'].map((item) => (
+              <span className="text-[10px] uppercase font-bold tracking-[0.16em] text-[#85877F] block mb-3">
+                1. Select Metabolic Fitness Goal
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {goals.map((g) => (
                   <button
-                    key={item}
-                    type="button"
-                    onClick={() => toggleAllergy(item)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition ${
-                      allergies.includes(item)
-                        ? 'bg-rose-600 text-white'
-                        : 'bg-[#FAF8F3] dark:bg-[#171916] text-[#85877F] border border-[#E5E1D7] dark:border-[#2E322C]'
+                    key={g.id}
+                    onClick={() => setGoal(g.id)}
+                    className={`p-3.5 rounded-2xl border text-left transition flex flex-col justify-between ${
+                      goal === g.id
+                        ? 'bg-[#173F35] text-[#F5F1E8] border-[#173F35] shadow-xs'
+                        : 'bg-[#FAF8F3] dark:bg-[#171916] text-[#171916] dark:text-[#F5F1E8] border-[#E5E1D7] dark:border-[#2E322C] hover:border-[#173F35]/40'
                     }`}
                   >
-                    {allergies.includes(item) ? `✕ ${item}` : `+ ${item}`}
+                    <span className="font-bold text-xs">{g.label}</span>
+                    <span className={`text-[10px] mt-1 ${goal === g.id ? 'text-[#C6A66B]' : 'text-[#85877F]'}`}>
+                      {g.desc}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Diet Type Selector */}
+            <div>
+              <span className="text-[10px] uppercase font-bold tracking-[0.16em] text-[#85877F] block mb-3">
+                2. Select Dietary Philosophy
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {dietTypes.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => setDietType(d.id)}
+                    className={`p-3.5 rounded-2xl border text-center transition flex flex-col items-center justify-center gap-1.5 ${
+                      dietType === d.id
+                        ? 'bg-[#173F35] text-[#F5F1E8] border-[#173F35] shadow-xs'
+                        : 'bg-[#FAF8F3] dark:bg-[#171916] text-[#171916] dark:text-[#F5F1E8] border-[#E5E1D7] dark:border-[#2E322C] hover:border-[#173F35]/40'
+                    }`}
+                  >
+                    <span className="text-xl">{d.icon}</span>
+                    <span className="font-semibold text-[11px] leading-tight">{d.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
           </div>
+
+          {/* Macro Summary Ribbon */}
+          <div className="mt-8 pt-6 border-t border-[#E5E1D7] dark:border-[#2E322C] grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div className="p-4 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C]">
+              <span className="text-[10px] uppercase font-bold text-[#85877F] tracking-wider block">Daily Calories</span>
+              <span className="text-2xl font-black font-display text-[#171916] dark:text-[#F5F1E8] mt-1 block">
+                {plan.targetCalories} <span className="text-xs font-normal text-[#85877F]">kcal</span>
+              </span>
+            </div>
+            <div className="p-4 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C]">
+              <span className="text-[10px] uppercase font-bold text-[#85877F] tracking-wider block">Protein Target</span>
+              <span className="text-2xl font-black font-display text-[#173F35] dark:text-[#C6A66B] mt-1 block">
+                {plan.macros.protein}g <span className="text-xs font-normal text-[#85877F]">/ day</span>
+              </span>
+            </div>
+            <div className="p-4 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C]">
+              <span className="text-[10px] uppercase font-bold text-[#85877F] tracking-wider block">Complex Carbs</span>
+              <span className="text-2xl font-black font-display text-[#171916] dark:text-[#F5F1E8] mt-1 block">
+                {plan.macros.carbs}g <span className="text-xs font-normal text-[#85877F]">/ day</span>
+              </span>
+            </div>
+            <div className="p-4 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C]">
+              <span className="text-[10px] uppercase font-bold text-[#85877F] tracking-wider block">Healthy Fats</span>
+              <span className="text-2xl font-black font-display text-[#171916] dark:text-[#F5F1E8] mt-1 block">
+                {plan.macros.fat}g <span className="text-xs font-normal text-[#85877F]">/ day</span>
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* TAB 1: DAILY BLUEPRINT */}
+        {/* ========================================================= */}
+        {/* TAB 1: DAILY MEAL CONTENTS */}
+        {/* ========================================================= */}
         {activeTab === 'daily' && (
-          <div>
-            {loading ? (
-              <div className="py-20 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#173F35] mx-auto mb-3"></div>
-                <p className="text-xs text-[#85877F]">Formulating individualized macro calculations...</p>
-              </div>
-            ) : dailyPlan ? (
-              <div className="space-y-8">
-                {/* Macronutrient Header Banner */}
-                <div className="bg-[#173F35] text-[#F5F1E8] rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#C6A66B] block mb-1">
-                      Target Energy Expenditure
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Breakfast */}
+              <div className="bg-[#FFFFFF] dark:bg-[#1E211D] rounded-3xl p-6 sm:p-7 border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-[#173F35]/10 text-[#173F35] dark:text-[#C6A66B] border border-[#173F35]/15">
+                      Meal 1 • Breakfast (08:00 AM)
                     </span>
-                    <h3 className="text-3xl font-extrabold font-display">
-                      {dailyPlan.targetCalories} <span className="text-sm font-normal text-[#FAF8F3]/80">kcal / day</span>
-                    </h3>
-                    <p className="text-xs text-[#FAF8F3]/70 mt-1 max-w-md">
-                      Calibrated based on a standard adult metabolic baseline and active resistance conditioning.
+                    <span className="text-xs font-bold text-[#171916] dark:text-[#F5F1E8]">
+                      {plan.meals.breakfast.cals} kcal
+                    </span>
+                  </div>
+
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#171916] dark:text-[#F5F1E8] mb-1">
+                    {plan.meals.breakfast.name}
+                  </h3>
+                  <span className="text-[11px] text-[#85877F] font-semibold block mb-4">
+                    Portion: {plan.meals.breakfast.portion} • Prep: {plan.meals.breakfast.prepTime}
+                  </span>
+
+                  {/* Macros breakdown */}
+                  <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] mb-4 text-center text-xs">
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Protein</span>
+                      <strong className="text-[#173F35] dark:text-[#C6A66B]">{plan.meals.breakfast.p}g</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Carbs</span>
+                      <strong className="text-[#171916] dark:text-[#F5F1E8]">{plan.meals.breakfast.c}g</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Fats</span>
+                      <strong className="text-[#171916] dark:text-[#F5F1E8]">{plan.meals.breakfast.f}g</strong>
+                    </div>
+                  </div>
+
+                  {/* Ingredients */}
+                  <div className="space-y-1.5 mb-4">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#85877F] block">
+                      Ingredients & Exact Portions:
+                    </span>
+                    <ul className="text-xs text-[#171916] dark:text-[#F5F1E8] space-y-1">
+                      {plan.meals.breakfast.ingredients?.map((ing, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          <Check size={13} className="text-[#26745A] shrink-0" />
+                          <span>{ing}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-[#E5E1D7] dark:border-[#2E322C] text-[11px] text-[#85877F] italic">
+                  💡 {plan.meals.breakfast.macroNotes}
+                </div>
+              </div>
+
+              {/* Mid-Morning Snack */}
+              <div className="bg-[#FFFFFF] dark:bg-[#1E211D] rounded-3xl p-6 sm:p-7 border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                      Meal 2 • Mid-Morning (11:30 AM)
+                    </span>
+                    <span className="text-xs font-bold text-[#171916] dark:text-[#F5F1E8]">
+                      {plan.meals.snack.cals} kcal
+                    </span>
+                  </div>
+
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#171916] dark:text-[#F5F1E8] mb-1">
+                    {plan.meals.snack.name}
+                  </h3>
+                  <span className="text-[11px] text-[#85877F] font-semibold block mb-4">
+                    Portion: {plan.meals.snack.portion} • Prep: {plan.meals.snack.prepTime}
+                  </span>
+
+                  {/* Macros breakdown */}
+                  <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] mb-4 text-center text-xs">
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Protein</span>
+                      <strong className="text-[#173F35] dark:text-[#C6A66B]">{plan.meals.snack.p}g</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Carbs</span>
+                      <strong className="text-[#171916] dark:text-[#F5F1E8]">{plan.meals.snack.c}g</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Fats</span>
+                      <strong className="text-[#171916] dark:text-[#F5F1E8]">{plan.meals.snack.f}g</strong>
+                    </div>
+                  </div>
+
+                  {/* Ingredients */}
+                  <div className="space-y-1.5 mb-4">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#85877F] block">
+                      Ingredients & Exact Portions:
+                    </span>
+                    <ul className="text-xs text-[#171916] dark:text-[#F5F1E8] space-y-1">
+                      {plan.meals.snack.ingredients?.map((ing, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          <Check size={13} className="text-[#26745A] shrink-0" />
+                          <span>{ing}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-[#E5E1D7] dark:border-[#2E322C] text-[11px] text-[#85877F] italic">
+                  💡 {plan.meals.snack.macroNotes}
+                </div>
+              </div>
+
+              {/* Lunch */}
+              <div className="bg-[#FFFFFF] dark:bg-[#1E211D] rounded-3xl p-6 sm:p-7 border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                      Meal 3 • Power Lunch (01:30 PM)
+                    </span>
+                    <span className="text-xs font-bold text-[#171916] dark:text-[#F5F1E8]">
+                      {plan.meals.lunch.cals} kcal
+                    </span>
+                  </div>
+
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#171916] dark:text-[#F5F1E8] mb-1">
+                    {plan.meals.lunch.name}
+                  </h3>
+                  <span className="text-[11px] text-[#85877F] font-semibold block mb-4">
+                    Portion: {plan.meals.lunch.portion} • Prep: {plan.meals.lunch.prepTime}
+                  </span>
+
+                  {/* Macros breakdown */}
+                  <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] mb-4 text-center text-xs">
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Protein</span>
+                      <strong className="text-[#173F35] dark:text-[#C6A66B]">{plan.meals.lunch.p}g</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Carbs</span>
+                      <strong className="text-[#171916] dark:text-[#F5F1E8]">{plan.meals.lunch.c}g</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Fats</span>
+                      <strong className="text-[#171916] dark:text-[#F5F1E8]">{plan.meals.lunch.f}g</strong>
+                    </div>
+                  </div>
+
+                  {/* Ingredients */}
+                  <div className="space-y-1.5 mb-4">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#85877F] block">
+                      Ingredients & Exact Portions:
+                    </span>
+                    <ul className="text-xs text-[#171916] dark:text-[#F5F1E8] space-y-1">
+                      {plan.meals.lunch.ingredients?.map((ing, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          <Check size={13} className="text-[#26745A] shrink-0" />
+                          <span>{ing}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-[#E5E1D7] dark:border-[#2E322C] text-[11px] text-[#85877F] italic">
+                  💡 {plan.meals.lunch.macroNotes}
+                </div>
+              </div>
+
+              {/* Dinner */}
+              <div className="bg-[#FFFFFF] dark:bg-[#1E211D] rounded-3xl p-6 sm:p-7 border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
+                      Meal 4 • Nocturnal Recovery Dinner (08:00 PM)
+                    </span>
+                    <span className="text-xs font-bold text-[#171916] dark:text-[#F5F1E8]">
+                      {plan.meals.dinner.cals} kcal
+                    </span>
+                  </div>
+
+                  <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#171916] dark:text-[#F5F1E8] mb-1">
+                    {plan.meals.dinner.name}
+                  </h3>
+                  <span className="text-[11px] text-[#85877F] font-semibold block mb-4">
+                    Portion: {plan.meals.dinner.portion} • Prep: {plan.meals.dinner.prepTime}
+                  </span>
+
+                  {/* Macros breakdown */}
+                  <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] mb-4 text-center text-xs">
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Protein</span>
+                      <strong className="text-[#173F35] dark:text-[#C6A66B]">{plan.meals.dinner.p}g</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Carbs</span>
+                      <strong className="text-[#171916] dark:text-[#F5F1E8]">{plan.meals.dinner.c}g</strong>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#85877F] block">Fats</span>
+                      <strong className="text-[#171916] dark:text-[#F5F1E8]">{plan.meals.dinner.f}g</strong>
+                    </div>
+                  </div>
+
+                  {/* Ingredients */}
+                  <div className="space-y-1.5 mb-4">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#85877F] block">
+                      Ingredients & Exact Portions:
+                    </span>
+                    <ul className="text-xs text-[#171916] dark:text-[#F5F1E8] space-y-1">
+                      {plan.meals.dinner.ingredients?.map((ing, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          <Check size={13} className="text-[#26745A] shrink-0" />
+                          <span>{ing}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-[#E5E1D7] dark:border-[#2E322C] text-[11px] text-[#85877F] italic">
+                  💡 {plan.meals.dinner.macroNotes}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 2: 7-DAY ROTATION SCHEDULE */}
+        {/* ========================================================= */}
+        {activeTab === 'weekly' && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {WEEKLY_DIET_SCHEDULE.map((dayPlan, idx) => (
+                <div
+                  key={idx}
+                  className="bg-[#FFFFFF] dark:bg-[#1E211D] p-6 rounded-3xl border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-bold font-serif text-[#173F35] dark:text-[#C6A66B]">
+                        {dayPlan.day}
+                      </span>
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C]">
+                        {dayPlan.targetCalories} kcal
+                      </span>
+                    </div>
+
+                    <span className="text-[11px] text-[#85877F] block mb-4">
+                      {dayPlan.theme}
+                    </span>
+
+                    <div className="space-y-2 text-xs">
+                      <div className="p-2.5 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                        <span className="text-[10px] text-[#85877F] uppercase font-bold block">Breakfast</span>
+                        <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">{dayPlan.breakfast}</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                        <span className="text-[10px] text-[#85877F] uppercase font-bold block">Lunch</span>
+                        <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">{dayPlan.lunch}</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                        <span className="text-[10px] text-[#85877F] uppercase font-bold block">Snack</span>
+                        <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">{dayPlan.snack}</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                        <span className="text-[10px] text-[#85877F] uppercase font-bold block">Dinner</span>
+                        <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">{dayPlan.dinner}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-[#E5E1D7] dark:border-[#2E322C] flex justify-between text-[11px] text-[#85877F]">
+                    <span>Protein: <strong className="text-[#173F35] dark:text-[#C6A66B]">{dayPlan.proteinGrams}g</strong></span>
+                    <span>Carbs: <strong className="text-[#171916] dark:text-[#F5F1E8]">{dayPlan.carbsGrams}g</strong></span>
+                    <span>Fats: <strong className="text-[#171916] dark:text-[#F5F1E8]">{dayPlan.fatGrams}g</strong></span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 3: GROCERY SHOPPING INVENTORY */}
+        {/* ========================================================= */}
+        {activeTab === 'grocery' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {CONSOLIDATED_GROCERY_LIST.map((group, idx) => (
+              <div
+                key={idx}
+                className="bg-[#FFFFFF] dark:bg-[#1E211D] p-6 sm:p-7 rounded-3xl border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <ShoppingBag className="w-4 h-4 text-[#C6A66B]" />
+                  <h3 className="font-bold text-sm text-[#171916] dark:text-[#F5F1E8]">
+                    {group.category}
+                  </h3>
+                </div>
+
+                <div className="space-y-2.5">
+                  {group.items.map((item, i) => (
+                    <div
+                      key={i}
+                      className="p-3 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C] flex items-center justify-between text-xs"
+                    >
+                      <div>
+                        <span className="font-bold text-[#171916] dark:text-[#F5F1E8] block">
+                          {item.name}
+                        </span>
+                        <span className="text-[10px] text-[#85877F]">{item.notes}</span>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-lg bg-[#FFFFFF] dark:bg-[#1E211D] border border-[#E5E1D7] dark:border-[#2E322C] font-mono text-[11px] font-bold text-[#173F35] dark:text-[#C6A66B]">
+                        {item.quantity}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 4: HYDRATION & ELECTROLYTE PROTOCOL */}
+        {/* ========================================================= */}
+        {activeTab === 'hydration' && (
+          <div className="bg-[#FFFFFF] dark:bg-[#1E211D] p-7 sm:p-9 rounded-3xl border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-6 pb-6 border-b border-[#E5E1D7] dark:border-[#2E322C]">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-[#85877F] tracking-wider block">
+                  Prescribed Daily Water Volume
+                </span>
+                <h3 className="font-serif text-3xl font-bold text-[#173F35] dark:text-[#C6A66B] mt-1">
+                  {HYDRATION_BLUEPRINT.dailyTargetLiters}
+                </h3>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-[#173F35]/10 text-[#173F35] dark:text-[#C6A66B] flex items-center justify-center">
+                <Droplet size={24} />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {HYDRATION_BLUEPRINT.schedule.map((slot, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                >
+                  <div className="space-y-1">
+                    <span className="font-bold text-[#171916] dark:text-[#F5F1E8] block">
+                      {slot.time}
+                    </span>
+                    <p className="text-[#85877F] dark:text-[#A8AAA3] leading-relaxed">
+                      {slot.detail}
                     </p>
                   </div>
-
-                  {/* Macro Counters */}
-                  <div className="grid grid-cols-3 gap-3 sm:gap-6 text-center">
-                    <div className="bg-[#102B24] px-4 py-3 rounded-2xl border border-[#26745A]/40">
-                      <span className="text-[9px] uppercase font-bold text-[#C6A66B] block">Protein</span>
-                      <span className="text-lg font-black text-white">{dailyPlan.macros?.protein}g</span>
-                    </div>
-                    <div className="bg-[#102B24] px-4 py-3 rounded-2xl border border-[#26745A]/40">
-                      <span className="text-[9px] uppercase font-bold text-[#C6A66B] block">Carbs</span>
-                      <span className="text-lg font-black text-white">{dailyPlan.macros?.carbs}g</span>
-                    </div>
-                    <div className="bg-[#102B24] px-4 py-3 rounded-2xl border border-[#26745A]/40">
-                      <span className="text-[9px] uppercase font-bold text-[#C6A66B] block">Fats</span>
-                      <span className="text-lg font-black text-white">{dailyPlan.macros?.fat}g</span>
-                    </div>
-                  </div>
-
-                  {/* Save to Profile Button */}
-                  {isAuthenticated && (
-                    <button
-                      onClick={handleSavePlan}
-                      disabled={savingPlan}
-                      className="px-5 py-3 rounded-xl bg-[#C6A66B] hover:bg-[#D8BF8F] text-[#171916] text-xs font-bold uppercase tracking-wider transition shrink-0 flex items-center gap-2 shadow-xs disabled:opacity-60"
-                    >
-                      <Save size={14} />
-                      {savingPlan ? 'Saving...' : saveSuccess ? 'Saved to Cloud ✅' : 'Save Blueprint'}
-                    </button>
-                  )}
+                  <span className="px-3 py-1 rounded-xl bg-[#FFFFFF] dark:bg-[#1E211D] border border-[#E5E1D7] dark:border-[#2E322C] font-mono font-bold text-[#173F35] dark:text-[#C6A66B] shrink-0 text-center">
+                    {slot.amount}
+                  </span>
                 </div>
-
-                {/* 4 Meals Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {Object.entries(dailyPlan.meals || {}).map(([mealKey, meal]) => {
-                    const titles = {
-                      breakfast: 'Breakfast (08:00 AM)',
-                      lunch: 'Lunch (01:00 PM)',
-                      snack: 'Pre/Post Workout (05:00 PM)',
-                      dinner: 'Dinner (08:30 PM)',
-                    };
-
-                    return (
-                      <div
-                        key={mealKey}
-                        className="bg-[#FFFFFF] dark:bg-[#1E211D] p-6 rounded-2xl border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs flex flex-col justify-between"
-                      >
-                        <div>
-                          <div className="flex items-center justify-between pb-3 border-b border-[#E5E1D7] dark:border-[#2E322C] mb-3">
-                            <span className="text-xs font-bold uppercase tracking-wider text-[#173F35] dark:text-[#C6A66B]">
-                              {titles[mealKey] || mealKey}
-                            </span>
-                            <span className="text-xs font-bold font-mono text-[#171916] dark:text-[#F5F1E8]">
-                              {meal.cals} kcal
-                            </span>
-                          </div>
-
-                          <h4 className="font-bold text-sm text-[#171916] dark:text-[#F5F1E8] mb-2">
-                            {meal.name}
-                          </h4>
-
-                          <p className="text-xs text-[#85877F] dark:text-[#A8AAA3] mb-3">
-                            <strong>Portion:</strong> {meal.portion}
-                          </p>
-
-                          <div className="text-xs text-[#85877F] dark:text-[#A8AAA3] space-y-1">
-                            <span className="font-bold text-[10px] uppercase tracking-wider block text-[#171916] dark:text-[#F5F1E8]">
-                              Ingredients:
-                            </span>
-                            <ul className="list-disc list-inside space-y-0.5 text-[11.5px]">
-                              {meal.ingredients?.map((ing, i) => (
-                                <li key={i}>{ing}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-
-                        {/* Meal Macro Pill */}
-                        <div className="mt-4 pt-3 border-t border-[#E5E1D7] dark:border-[#2E322C] flex items-center justify-between text-[11px] font-semibold text-[#85877F]">
-                          <span>Protein: {meal.p}g</span>
-                          <span>Carbs: {meal.c}g</span>
-                          <span>Fat: {meal.f}g</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        {/* TAB 2: SAVED BLUEPRINTS */}
-        {activeTab === 'saved' && (
-          <div>
-            {!isAuthenticated ? (
-              <div className="bg-[#FFFFFF] dark:bg-[#1E211D] rounded-3xl p-10 text-center border border-[#E5E1D7] dark:border-[#2E322C] max-w-xl mx-auto">
-                <Bookmark className="w-10 h-10 text-[#C6A66B] mx-auto mb-3" />
-                <h3 className="text-lg font-bold text-[#171916] dark:text-[#F5F1E8]">
-                  Save Your Blueprints to the Cloud
-                </h3>
-                <p className="text-xs text-[#85877F] mt-2 mb-6">
-                  Sign in or create an account to persist custom meal blueprints in MongoDB and reload them on any device.
-                </p>
-                <button
-                  onClick={() => setActiveTab('daily')}
-                  className="px-5 py-2.5 rounded-xl bg-[#173F35] text-[#F5F1E8] text-xs font-semibold"
-                >
-                  Generate Free Blueprint
-                </button>
-              </div>
-            ) : savedPlans.length === 0 ? (
-              <div className="bg-[#FFFFFF] dark:bg-[#1E211D] rounded-3xl p-10 text-center border border-[#E5E1D7] dark:border-[#2E322C] max-w-xl mx-auto">
-                <Bookmark className="w-10 h-10 text-[#85877F] mx-auto mb-3" />
-                <h3 className="text-base font-bold text-[#171916] dark:text-[#F5F1E8]">
-                  No Saved Diet Plans Yet
-                </h3>
-                <p className="text-xs text-[#85877F] mt-1 mb-6">
-                  Configure your preferences in the Daily Blueprint tab and click "Save Blueprint" to store it permanently in your account.
-                </p>
-                <button
-                  onClick={() => setActiveTab('daily')}
-                  className="px-5 py-2 rounded-xl bg-[#173F35] text-[#F5F1E8] text-xs font-semibold"
-                >
-                  Create Your First Plan
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {savedPlans.map((plan) => (
-                  <div
-                    key={plan._id}
-                    className="bg-[#FFFFFF] dark:bg-[#1E211D] p-6 rounded-2xl border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#C6A66B]">
-                          {plan.dietaryPreference} &bull; {plan.fitnessGoal?.replace('_', ' ')}
-                        </span>
-                        <button
-                          onClick={() => handleDeleteSavedPlan(plan._id)}
-                          className="text-[#85877F] hover:text-rose-600 p-1"
-                          title="Delete saved plan"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                      <h4 className="font-bold text-sm text-[#171916] dark:text-[#F5F1E8]">
-                        {plan.planName}
-                      </h4>
-                      <p className="text-xl font-extrabold font-display text-[#173F35] dark:text-[#C6A66B] my-2">
-                        {plan.dailyCaloricTarget} kcal
-                      </p>
-                      <div className="flex gap-3 text-xs text-[#85877F]">
-                        <span>P: {plan.macronutrientDistribution?.proteinGrams}g</span>
-                        <span>C: {plan.macronutrientDistribution?.carbsGrams}g</span>
-                        <span>F: {plan.macronutrientDistribution?.fatGrams}g</span>
-                      </div>
-
-                      <div className="mt-4 pt-3 border-t border-[#E5E1D7] dark:border-[#2E322C] space-y-1.5">
-                        {plan.mealBreakdown?.map((m, idx) => (
-                          <div key={idx} className="text-[11.5px] text-[#85877F] flex justify-between">
-                            <span>{m.mealName}:</span>
-                            <span className="font-medium text-[#171916] dark:text-[#F5F1E8] truncate max-w-[150px]">
-                              {m.items?.[0]?.name || 'Scheduled Meal'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-3 border-t border-[#E5E1D7] dark:border-[#2E322C] text-[10px] text-[#85877F]">
-                      Saved {new Date(plan.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB 3: WEEKLY LOGISTICS (Member Tier) */}
-        {activeTab === 'weekly' && (
-          <div>
-            {!isPremium ? (
-              <div className="bg-[#FFFFFF] dark:bg-[#1E211D] rounded-3xl p-10 text-center border border-[#C6A66B]/30 max-w-xl mx-auto">
-                <div className="w-12 h-12 rounded-2xl bg-[#C6A66B]/15 text-[#C6A66B] flex items-center justify-center mx-auto mb-4">
-                  <Lock className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold text-[#171916] dark:text-[#F5F1E8]">
-                  Weekly Meal Schedules & Grocery Logistics
-                </h3>
-                <p className="text-xs text-[#85877F] mt-2 mb-6 leading-relaxed">
-                  7-day rotational menus, consolidated grocery shopping ingredient quantities, and batch-cooking guidance are reserved for Good Life private club members.
-                </p>
-                <button
-                  onClick={upgradeToPremium}
-                  className="px-6 py-3 rounded-xl bg-[#173F35] hover:bg-[#1F5144] text-[#F5F1E8] text-xs font-bold uppercase tracking-wider transition shadow-sm"
-                >
-                  Upgrade to Member ($29/mo)
-                </button>
-              </div>
-            ) : premiumPlan ? (
-              <div className="space-y-6">
-                <div className="bg-[#FFFFFF] dark:bg-[#1E211D] p-6 rounded-2xl border border-[#E5E1D7] dark:border-[#2E322C]">
-                  <h3 className="text-lg font-bold text-[#171916] dark:text-[#F5F1E8] mb-4">
-                    7-Day Consolidated Grocery List
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {premiumPlan.shoppingList?.map((item, idx) => (
-                      <div key={idx} className="p-3 rounded-xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C] text-xs">
-                        <span className="font-bold text-[#171916] dark:text-[#F5F1E8] block">{item.name}</span>
-                        <span className="text-[#85877F] text-[11px]">{item.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : null}
+              ))}
+            </div>
           </div>
         )}
 

@@ -142,12 +142,8 @@ const AiCoachDashboard = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <div className="flex items-center gap-2.5 mb-2">
-              <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-[0.16em] ${
-                isPremium
-                  ? 'bg-[#173F35] text-[#C6A66B] border border-[#26745A]'
-                  : 'bg-[#FFFFFF] text-[#85877F] border border-[#E5E1D7]'
-              }`}>
-                {isPremium ? 'Good Life Member' : 'Free Sanctuary Account'}
+              <span className="text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-[0.16em] bg-[#173F35] text-[#C6A66B] border border-[#26745A]">
+                AI Coach Active (Free Access)
               </span>
               <span className="text-xs text-[#85877F]">
                 {user?.profile?.fitnessLevel ? `Level: ${user.profile.fitnessLevel}` : 'Private Studio'}
@@ -208,33 +204,30 @@ const AiCoachDashboard = () => {
           </div>
         )}
 
-        {/* Free Plan Upgrade CTA Banner (For Free Users) */}
-        {!isPremium && (
-          <div className="mb-10 p-8 bg-[#171916] text-[#F5F1E8] rounded-3xl border border-[#2A3029] shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-[#173F35]/20 rounded-full blur-3xl pointer-events-none" />
-            <div className="space-y-2 max-w-2xl relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#173F35] text-[#C6A66B] text-[10px] font-bold uppercase tracking-[0.2em] border border-[#26745A]">
-                <Sparkles size={12} />
-                Private Membership Access
-              </div>
-              <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#F5F1E8]">
-                Unlock Real-Time Computer Vision Optical Pose Tracking
-              </h3>
-              <p className="text-xs text-[#A6A7A1] leading-relaxed">
-                As a free sanctuary guest, you have full access to our public BMI calculator, manual exercise library, and daily diet blueprints. Elevate to Good Life Member to unlock 33-point joint optical tracking, auditory posture coaching cues, and cloud weekly logistics.
-              </p>
+        {/* Free AI Coach Feature Active Banner */}
+        <div className="mb-10 p-7 bg-[#171916] text-[#F5F1E8] rounded-3xl border border-[#26745A]/40 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-[#173F35]/30 rounded-full blur-3xl pointer-events-none" />
+          <div className="space-y-2 max-w-2xl relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#173F35] text-[#C6A66B] text-[10px] font-bold uppercase tracking-[0.2em] border border-[#26745A]">
+              <Sparkles size={12} />
+              Free AI Computer Vision Unlocked
             </div>
-            <button
-              onClick={handleUpgrade}
-              disabled={upgrading}
-              className="px-6 py-3.5 rounded-xl bg-[#C6A66B] hover:bg-[#b08f52] text-[#171916] text-xs font-bold uppercase tracking-wider transition shrink-0 shadow-sm flex items-center gap-2 disabled:opacity-60 relative z-10"
-            >
-              <Sparkles size={14} />
-              {upgrading ? 'Upgrading...' : 'Upgrade to Member ($29/mo)'}
-              <ArrowRight size={13} />
-            </button>
+            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#F5F1E8]">
+              Zero Cost Real-Time Pose Tracking & Rep Counting
+            </h3>
+            <p className="text-xs text-[#A6A7A1] leading-relaxed">
+              Your browser uses MediaPipe WebAssembly GPU acceleration for 33-point joint detection, live form coaching, and repetition logging with complete privacy.
+            </p>
           </div>
-        )}
+          <Link
+            to="/exercises"
+            className="px-6 py-3.5 rounded-xl bg-[#173F35] hover:bg-[#1f5043] text-[#F5F1E8] text-xs font-bold uppercase tracking-wider transition shrink-0 shadow-sm flex items-center gap-2 border border-[#26745A] relative z-10"
+          >
+            <Camera size={14} className="text-[#C6A66B]" />
+            Select Movement to Track
+            <ArrowRight size={13} />
+          </Link>
+        </div>
 
         {/* Core Metric Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">

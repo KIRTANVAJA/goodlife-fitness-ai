@@ -163,7 +163,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const isPremium = user ? (user.subscription?.plan === 'PREMIUM' || user.subscription?.tier === 'gold' || user.subscription?.hasPremiumAccess === true) : false;
+  // Free AI Coach Architecture: all athletes have full access to optical pose tracking and AI features
+  const isPremium = true;
 
   return (
     <AuthContext.Provider

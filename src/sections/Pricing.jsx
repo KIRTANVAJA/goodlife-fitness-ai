@@ -94,14 +94,14 @@ const Pricing = () => {
               {/* Feature Checklist */}
               <div className="space-y-3 pt-6 border-t border-[#E5E1D7] dark:border-[#2E322C]">
                 {[
+                  { title: 'Real-Time Webcam Pose Tracking (Free AI Coach)', included: true },
+                  { title: 'Automated Repetition Counter & Live Joint Angles', included: true },
                   { title: 'Full 24-Exercise Biomechanical Catalog', included: true },
-                  { title: 'Public Biometric BMI Calculator & Classification', included: true },
-                  { title: 'Rule-Based Daily Meal Blueprint Generator', included: true },
-                  { title: 'Manual Step-by-Step Movement Guidance', included: true },
-                  { title: 'Real-Time Webcam Pose Tracking', included: false },
-                  { title: 'Automated Repetition Counter & Form Checks', included: false },
-                  { title: 'MongoDB Cloud Session History & Telemetry', included: false },
-                  { title: '7-Day Meal Logistics & Shopping Schedules', included: false },
+                  { title: 'Biometric BMI Calculator & Classification', included: true },
+                  { title: 'Pure Diet Meal Blueprint Generator (All Cuisines)', included: true },
+                  { title: '7-Day Weekly Meal Schedules & Grocery Logistics', included: true },
+                  { title: 'Workout Session History & Progress Analytics', included: true },
+                  { title: 'VIP On-Floor Personal Coach & Private Sauna Lounge', included: false },
                 ].map((feat, idx) => (
                   <div key={idx} className="flex items-start gap-3 text-xs leading-normal">
                     {feat.included ? (

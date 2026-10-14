@@ -13,10 +13,15 @@ import {
   Play,
   RotateCcw,
   Clock,
-  Repeat
+  Repeat,
+  ChevronRight,
+  Flame,
+  Layers,
+  Zap
 } from 'lucide-react';
 import api from '../services/api';
 import storageService from '../services/storageService';
+import { initialExercises } from '../data/exerciseData';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -58,6 +63,26 @@ const ExerciseDetail = () => {
 
     fetchExercise();
   }, [id]);
+
+  // Compute related exercises by shared primary muscles and discipline
+  const relatedExercises = React.useMemo(() => {
+    if (!exercise) return [];
+    const currentPrimary = exercise.targetMuscles?.primary || [];
+    return initialExercises
+      .filter((e) => e.exerciseId !== exercise.exerciseId)
+      .map((e) => {
+        let score = 0;
+        if (e.category === exercise.category) score += 3;
+        const sharedPrimary = e.targetMuscles?.primary?.filter((m) => currentPrimary.includes(m)) || [];
+        score += sharedPrimary.length * 3;
+        if (e.equipment === exercise.equipment) score += 1;
+        if (e.trackingSupported) score += 1;
+        return { exercise: e, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map((item) => item.exercise);
+  }, [exercise]);
 
   if (loading) {
     return (
@@ -331,6 +356,208 @@ const ExerciseDetail = () => {
                   <li key={i}>{ins}</li>
                 ))}
               </ul>
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* ========================================================= */}
+        {/* RELATED CONTENT: COMPLEMENTARY MOVEMENTS & EXERCISE PAIRINGS */}
+        {/* ========================================================= */}
+        <div className="mt-14 pt-12 border-t border-[#E5E1D7] dark:border-[#2E322C] space-y-12">
+          
+          {/* Related Exercises Cards Grid */}
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#173F35]/10 dark:bg-[#173F35]/25 border border-[#173F35]/20 dark:border-[#26745A]/30 text-[#173F35] dark:text-[#C6A66B] text-[10px] font-bold tracking-[0.2em] uppercase mb-2">
+                  <Layers className="w-3 h-3 text-[#C6A66B]" />
+                  Related Movements
+                </div>
+                <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#171916] dark:text-[#F5F1E8]">
+                  Complementary Exercises for {exercise.name}
+                </h3>
+                <p className="text-xs text-[#85877F] dark:text-[#A8AAA3] mt-1">
+                  Exercises targeting overlapping prime movers ({exercise.targetMuscles?.primary?.join(', ') || 'Muscle Group'}) to balance kinetic chains.
+                </p>
+              </div>
+
+              <Link
+                to="/exercises"
+                className="inline-flex items-center gap-1 text-xs font-bold text-[#173F35] dark:text-[#C6A66B] hover:underline"
+              >
+                Browse All 24 Exercises
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {relatedExercises.map((rel) => (
+                <div
+                  key={rel.exerciseId}
+                  className="bg-[#FFFFFF] dark:bg-[#1E211D] rounded-3xl border border-[#E5E1D7] dark:border-[#2E322C] overflow-hidden shadow-xs hover:border-[#173F35]/40 dark:hover:border-[#26745A]/50 transition flex flex-col justify-between group"
+                >
+                  <div className="relative aspect-video overflow-hidden bg-[#171916]">
+                    <img
+                      src={rel.demoMedia?.image || 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop'}
+                      alt={rel.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-90"
+                    />
+                    <div className="absolute top-3 left-3 flex items-center gap-2">
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-[#171916]/80 backdrop-blur-md text-[#F5F1E8] border border-[#2E322C]">
+                        {rel.category}
+                      </span>
+                      {rel.trackingSupported && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-[#173F35]/90 text-[#C6A66B] border border-[#26745A]/50 flex items-center gap-1">
+                          <Camera size={10} />
+                          AI Free
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h4 className="font-serif text-lg font-bold text-[#171916] dark:text-[#F5F1E8] mb-1.5 group-hover:text-[#173F35] dark:group-hover:text-[#C6A66B] transition">
+                        {rel.name}
+                      </h4>
+                      <p className="text-xs text-[#85877F] dark:text-[#A8AAA3] line-clamp-2 leading-relaxed mb-3">
+                        {rel.shortDescription}
+                      </p>
+
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {rel.targetMuscles?.primary?.slice(0, 2).map((m, i) => (
+                          <span
+                            key={i}
+                            className="text-[10px] px-2 py-0.5 rounded-md bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C] text-[#85877F] dark:text-[#A8AAA3]"
+                          >
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#E5E1D7] dark:border-[#2E322C] flex items-center justify-between">
+                      <Link
+                        to={`/exercises/${rel.exerciseId}`}
+                        className="text-xs font-semibold text-[#173F35] dark:text-[#C6A66B] hover:underline flex items-center gap-1"
+                      >
+                        Biomechanics
+                        <ChevronRight size={13} />
+                      </Link>
+
+                      {rel.trackingSupported ? (
+                        <Link
+                          to={`/workout/active/${rel.exerciseId}`}
+                          className="px-3 py-1.5 rounded-xl bg-[#173F35] hover:bg-[#1f5043] text-[#F5F1E8] text-[11px] font-bold uppercase tracking-wider transition flex items-center gap-1"
+                        >
+                          <Camera size={11} className="text-[#C6A66B]" />
+                          AI Track
+                        </Link>
+                      ) : (
+                        <Link
+                          to={`/exercises/${rel.exerciseId}`}
+                          className="px-3 py-1.5 rounded-xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C] text-[#171916] dark:text-[#F5F1E8] text-[11px] font-semibold transition"
+                        >
+                          Learn Form
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Synergistic Superset Pairings & Progression Ladder */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            {/* Superset & Antagonist Pairings */}
+            <div className="bg-[#FFFFFF] dark:bg-[#1E211D] p-7 rounded-3xl border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#173F35]/10 text-[#173F35] dark:text-[#C6A66B] flex items-center justify-center">
+                  <Zap size={16} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#171916] dark:text-[#F5F1E8]">
+                    Synergistic Superset Protocol
+                  </h4>
+                  <span className="text-[10px] text-[#85877F] uppercase tracking-wider block">
+                    Optimized Metabolic Efficiency
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-3 text-xs text-[#85877F] dark:text-[#A8AAA3] leading-relaxed">
+                <div className="p-3.5 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C]">
+                  <strong className="text-[#171916] dark:text-[#F5F1E8] block mb-1">
+                    1. Antagonist Paired Set (APS)
+                  </strong>
+                  Pair {exercise.name} with an opposing kinetic chain movement to promote reciprocal inhibition and enhanced neuromuscular force output.
+                </div>
+                <div className="p-3.5 rounded-2xl bg-[#FAF8F3] dark:bg-[#171916] border border-[#E5E1D7] dark:border-[#2E322C]">
+                  <strong className="text-[#171916] dark:text-[#F5F1E8] block mb-1">
+                    2. Core Bracing Integration
+                  </strong>
+                  Follow your working set with a 30-45s isometric plank or dead bug to reinforce intra-abdominal pressure (IAP) stability.
+                </div>
+              </div>
+            </div>
+
+            {/* Progression & Regression Ladder */}
+            <div className="bg-[#FFFFFF] dark:bg-[#1E211D] p-7 rounded-3xl border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#C6A66B]/15 text-[#C6A66B] flex items-center justify-center">
+                  <Flame size={16} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#171916] dark:text-[#F5F1E8]">
+                    Movement Progression Hierarchy
+                  </h4>
+                  <span className="text-[10px] text-[#85877F] uppercase tracking-wider block">
+                    Adaptive Overload Scale
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="p-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">
+                      Level 1: Regression
+                    </span>
+                    <span className="text-[#171916] dark:text-[#F5F1E8] font-semibold">
+                      Assisted / Elevated Eccentric Variation
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-[#85877F]">Warm-up / Deload</span>
+                </div>
+
+                <div className="p-3 rounded-2xl border border-[#173F35]/30 bg-[#173F35]/5 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-[#173F35] dark:text-[#C6A66B] uppercase tracking-wider block">
+                      Level 2: Current Standard
+                    </span>
+                    <span className="text-[#171916] dark:text-[#F5F1E8] font-semibold">
+                      {exercise.name} (Strict Biomechanics)
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-bold text-[#173F35] dark:text-[#C6A66B]">Active Focus</span>
+                </div>
+
+                <div className="p-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider block">
+                      Level 3: Progression
+                    </span>
+                    <span className="text-[#171916] dark:text-[#F5F1E8] font-semibold">
+                      Paused Tempo / Explosive Plyometric Overload
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-[#85877F]">Adaptation</span>
+                </div>
+              </div>
             </div>
 
           </div>

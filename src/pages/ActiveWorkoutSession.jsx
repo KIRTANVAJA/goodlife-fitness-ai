@@ -264,12 +264,8 @@ const ActiveWorkoutSession = () => {
     }
   };
 
-  // Handle camera start with premium entitlement check
+  // Handle camera start — Free AI Coach for all athletes
   const handleRequestStartCamera = () => {
-    if (!isPremium) {
-      setShowPremiumModal(true);
-      return;
-    }
     startCamera();
   };
 
@@ -516,7 +512,7 @@ const ActiveWorkoutSession = () => {
                   className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-[#173F35] hover:bg-[#1f5043] text-[#F5F1E8] font-bold text-xs uppercase tracking-wider transition border border-[#26745A] shadow-lg disabled:opacity-50"
                 >
                   <Camera className="w-4 h-4 text-[#C6A66B]" />
-                  {cameraLoading ? 'Starting Optical Sensor...' : (isPremium ? 'Engage Optical Tracking' : 'Unlock AI Tracking (Member)')}
+                  {cameraLoading ? 'Starting Optical Sensor...' : 'Start Free AI Camera Tracking'}
                 </button>
               </div>
             )}

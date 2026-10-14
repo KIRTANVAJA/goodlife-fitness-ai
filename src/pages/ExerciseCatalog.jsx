@@ -16,14 +16,16 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import storageService from '../services/storageService';
+import { initialExercises } from '../data/exerciseData';
+import clientFallbackService from '../services/clientFallbackService';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 const ExerciseCatalog = () => {
   const [exercises, setExercises] = useState(() => {
-    return storageService.getCache('exercises-catalog') || [];
+    return storageService.getCache('exercises-catalog') || initialExercises;
   });
-  const [loading, setLoading] = useState(exercises.length === 0);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isFromCache, setIsFromCache] = useState(false);
   
@@ -74,13 +76,10 @@ const ExerciseCatalog = () => {
           }
         }
       } catch (err) {
-        const cached = storageService.getCache('exercises-catalog');
-        if (cached && cached.length > 0) {
-          setExercises(cached);
-          setIsFromCache(true);
-        } else {
-          setError(err.message || 'Failed to load exercises');
-        }
+        const fallback = clientFallbackService.getExercises(url);
+        setExercises(fallback.data || initialExercises);
+        setIsFromCache(true);
+        setError(null);
       } finally {
         setLoading(false);
       }
@@ -350,6 +349,149 @@ const ExerciseCatalog = () => {
             })}
           </div>
         )}
+
+        {/* Curated Movement Circuits & Related Pairings */}
+        <div className="mt-16 pt-12 border-t border-[#E5E1D7] dark:border-[#2E322C]">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#173F35]/10 dark:bg-[#173F35]/25 border border-[#173F35]/20 dark:border-[#26745A]/30 text-[#173F35] dark:text-[#C6A66B] text-[10px] font-bold tracking-[0.2em] uppercase mb-2">
+              <Sparkles className="w-3 h-3 text-[#C6A66B]" />
+              Recommended Combinations
+            </div>
+            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#171916] dark:text-[#F5F1E8]">
+              High-Yield Kinetic Circuits
+            </h3>
+            <p className="text-xs text-[#85877F] dark:text-[#A8AAA3] mt-1.5">
+              Multi-joint exercise pairings engineered to maximize post-exercise oxygen consumption (EPOC) and joint structural integrity.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Circuit 1: Full-Body Foundation */}
+            <div className="p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#1E211D] border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                    Compound Triad
+                  </span>
+                  <span className="text-[11px] text-[#85877F] font-semibold">18 Mins</span>
+                </div>
+                <h4 className="font-serif text-lg font-bold text-[#171916] dark:text-[#F5F1E8] mb-2">
+                  Total Body Power Triad
+                </h4>
+                <p className="text-xs text-[#85877F] dark:text-[#A8AAA3] leading-relaxed mb-4">
+                  Cycle through Bodyweight Squat (Legs), Push-Up (Chest/Arms), and Plank Hold (Core) with 60s rest between cycles.
+                </p>
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                    <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">1. Bodyweight Squat</span>
+                    <span className="text-[10px] text-[#173F35] dark:text-[#C6A66B] font-bold">12-15 Reps</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                    <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">2. Strict Push-Up</span>
+                    <span className="text-[10px] text-[#173F35] dark:text-[#C6A66B] font-bold">10-12 Reps</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                    <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">3. Isometric Plank</span>
+                    <span className="text-[10px] text-[#173F35] dark:text-[#C6A66B] font-bold">45-60 Sec</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 pt-4 border-t border-[#E5E1D7] dark:border-[#2E322C]">
+                <Link
+                  to="/workout/active/squat"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#173F35] hover:bg-[#1F5144] text-[#F5F1E8] text-xs font-bold uppercase tracking-wider transition"
+                >
+                  <Camera size={12} className="text-[#C6A66B]" />
+                  Launch Circuit with AI
+                </Link>
+              </div>
+            </div>
+
+            {/* Circuit 2: Unilateral Durability */}
+            <div className="p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#1E211D] border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                    Bilateral Balance
+                  </span>
+                  <span className="text-[11px] text-[#85877F] font-semibold">15 Mins</span>
+                </div>
+                <h4 className="font-serif text-lg font-bold text-[#171916] dark:text-[#F5F1E8] mb-2">
+                  Unilateral Kinetic Chain
+                </h4>
+                <p className="text-xs text-[#85877F] dark:text-[#A8AAA3] leading-relaxed mb-4">
+                  Correct pelvic discrepancies, lead leg dominance, and knee tracking angles across alternating unilateral volume.
+                </p>
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                    <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">1. Forward Lunge</span>
+                    <span className="text-[10px] text-[#173F35] dark:text-[#C6A66B] font-bold">10 / leg</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                    <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">2. Single-Leg Calf Raise</span>
+                    <span className="text-[10px] text-[#173F35] dark:text-[#C6A66B] font-bold">15 / leg</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                    <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">3. Side Plank Hold</span>
+                    <span className="text-[10px] text-[#173F35] dark:text-[#C6A66B] font-bold">30s / side</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 pt-4 border-t border-[#E5E1D7] dark:border-[#2E322C]">
+                <Link
+                  to="/workout/active/lunge"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#173F35] hover:bg-[#1F5144] text-[#F5F1E8] text-xs font-bold uppercase tracking-wider transition"
+                >
+                  <Camera size={12} className="text-[#C6A66B]" />
+                  Launch Circuit with AI
+                </Link>
+              </div>
+            </div>
+
+            {/* Circuit 3: Anterior-Posterior Hypertrophy */}
+            <div className="p-6 rounded-3xl bg-[#FFFFFF] dark:bg-[#1E211D] border border-[#E5E1D7] dark:border-[#2E322C] shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
+                    Upper Body Antagonist
+                  </span>
+                  <span className="text-[11px] text-[#85877F] font-semibold">20 Mins</span>
+                </div>
+                <h4 className="font-serif text-lg font-bold text-[#171916] dark:text-[#F5F1E8] mb-2">
+                  Press-Pull Hypertrophy
+                </h4>
+                <p className="text-xs text-[#85877F] dark:text-[#A8AAA3] leading-relaxed mb-4">
+                  Maintain postural scapular retraction while matching chest push volume with latissimus and rhomboid pulls.
+                </p>
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                    <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">1. Strict Push-Up</span>
+                    <span className="text-[10px] text-[#173F35] dark:text-[#C6A66B] font-bold">12 Reps</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                    <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">2. Pull-Up / Bodyweight Row</span>
+                    <span className="text-[10px] text-[#173F35] dark:text-[#C6A66B] font-bold">8-10 Reps</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-[#FAF8F3] dark:bg-[#171916]">
+                    <span className="font-semibold text-[#171916] dark:text-[#F5F1E8]">3. Dead Bug Core Hollow</span>
+                    <span className="text-[10px] text-[#173F35] dark:text-[#C6A66B] font-bold">12 / side</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 pt-4 border-t border-[#E5E1D7] dark:border-[#2E322C]">
+                <Link
+                  to="/workout/active/push-up"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#173F35] hover:bg-[#1F5144] text-[#F5F1E8] text-xs font-bold uppercase tracking-wider transition"
+                >
+                  <Camera size={12} className="text-[#C6A66B]" />
+                  Launch Circuit with AI
+                </Link>
+              </div>
+            </div>
+
+          </div>
+        </div>
 
       </main>
 
