@@ -95,7 +95,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_shoulder', 'left_elbow', 'left_wrist', 'left_hip'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -151,7 +151,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_shoulder', 'left_elbow', 'left_wrist'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -209,7 +209,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_shoulder', 'left_elbow', 'left_wrist', 'left_hip'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -263,7 +263,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'front',
     requiredLandmarks: ['left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -317,7 +317,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'front',
     requiredLandmarks: ['left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -434,7 +434,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_hip', 'left_knee', 'left_ankle', 'left_shoulder'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -541,7 +541,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_hip', 'left_knee', 'left_ankle'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -595,7 +595,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_shoulder', 'left_hip', 'left_knee', 'left_ankle'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -647,7 +647,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_knee', 'left_ankle'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -705,7 +705,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'front',
     requiredLandmarks: ['left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -759,7 +759,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'front',
     requiredLandmarks: ['left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -811,7 +811,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'front',
     requiredLandmarks: ['left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -869,7 +869,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'front',
     requiredLandmarks: ['left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -922,7 +922,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_shoulder', 'left_elbow', 'left_wrist'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -1037,7 +1037,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_shoulder', 'left_hip', 'left_ankle'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: true,
@@ -1090,7 +1090,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_shoulder', 'left_hip', 'left_knee', 'left_wrist'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -1143,7 +1143,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_shoulder', 'right_shoulder', 'left_knee', 'right_knee'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: false,
@@ -1199,7 +1199,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'front',
     requiredLandmarks: ['left_shoulder', 'right_shoulder', 'left_wrist', 'right_wrist', 'left_ankle', 'right_ankle'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: true,
@@ -1253,7 +1253,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_hip', 'left_knee', 'left_ankle', 'right_hip', 'right_knee', 'right_ankle'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: true,
@@ -1306,7 +1306,7 @@ export const initialExercises = [
     ],
     cameraOrientation: 'side',
     requiredLandmarks: ['left_shoulder', 'left_hip', 'left_knee'],
-    trackingSupported: false,
+    trackingSupported: true,
     trackingCapabilities: {
       repCounting: false,
       durationTracking: true,

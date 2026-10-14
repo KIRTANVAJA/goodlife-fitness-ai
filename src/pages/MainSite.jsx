@@ -77,9 +77,6 @@ const MainSite = () => {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-transparent text-current">
-      {/* Background Canvas Particles and ambient light glows */}
-      <BackgroundEffects theme={activeTheme} />
-
       {/* Floating Header Navbar */}
       <Navbar theme={activeTheme} onAdminTrigger={() => setIsAuthModalOpen(true)} />
 

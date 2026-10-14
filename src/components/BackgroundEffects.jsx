@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useContext } from 'react';
 import { ContentContext } from '../context/ContentContext';
+import BloomFieldBackground from './BloomFieldBackground';
 
 const BackgroundEffects = ({ theme }) => {
   const canvasRef = useRef(null);
@@ -22,7 +23,6 @@ const BackgroundEffects = ({ theme }) => {
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Map animationIntensity config parameters
     const intensityConfig = {
       none: { countMult: 0, speedMult: 0 },
       calm: { countMult: 0.5, speedMult: 0.5 },
@@ -32,15 +32,14 @@ const BackgroundEffects = ({ theme }) => {
     
     const config = intensityConfig[animationIntensity] || intensityConfig.cinematic;
 
-    // Theme-specific particle properties
     class Particle {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
         this.size = Math.random() * 2 + 0.5;
         this.speedX = (Math.random() * 0.4 - 0.2) * config.speedMult;
-        this.speedY = (Math.random() * -0.5 - 0.1) * config.speedMult; // Float upwards
-        this.opacity = Math.random() * 0.5 + 0.1;
+        this.speedY = (Math.random() * -0.5 - 0.1) * config.speedMult;
+        this.opacity = Math.random() * 0.4 + 0.1;
         this.pulseSpeed = (Math.random() * 0.02 + 0.005) * config.speedMult;
         this.pulseDir = Math.random() > 0.5 ? 1 : -1;
       }
@@ -50,7 +49,6 @@ const BackgroundEffects = ({ theme }) => {
         this.x += this.speedX;
         this.y += this.speedY;
 
-        // Reset if they float off screen
         if (this.y < 0) {
           this.y = canvas.height;
           this.x = Math.random() * canvas.width;
@@ -59,18 +57,15 @@ const BackgroundEffects = ({ theme }) => {
           this.speedX = -this.speedX;
         }
 
-        // Opacity pulsing
         this.opacity += this.pulseSpeed * this.pulseDir;
-        if (this.opacity > 0.7 || this.opacity < 0.1) {
+        if (this.opacity > 0.6 || this.opacity < 0.1) {
           this.pulseDir = -this.pulseDir;
         }
       }
 
       draw() {
         if (config.countMult === 0) return;
-        const particleColor = theme === 'dark'
-          ? `rgba(229, 231, 235, ${this.opacity})` // Silver
-          : `rgba(212, 175, 55, ${this.opacity})`;  // Gold
+        const particleColor = `rgba(198, 166, 107, ${this.opacity * 0.7})`; // Champagne Gold dust
         ctx.fillStyle = particleColor;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
@@ -79,7 +74,7 @@ const BackgroundEffects = ({ theme }) => {
     }
 
     const initParticles = () => {
-      const baseCount = Math.min(Math.floor(canvas.width / 25), 60);
+      const baseCount = Math.min(Math.floor(canvas.width / 35), 45);
       const count = Math.floor(baseCount * config.countMult);
       particles = [];
       for (let i = 0; i < count; i++) {
@@ -112,51 +107,15 @@ const BackgroundEffects = ({ theme }) => {
     };
   }, [theme, animationIntensity]);
 
-  const getFlareStyle = (baseSeconds, delaySeconds = 0) => {
-    if (animationIntensity === 'none') {
-      return { animation: 'none' };
-    }
-    const speedMultMap = {
-      calm: 2,
-      cinematic: 1,
-      active: 0.5
-    };
-    const mult = speedMultMap[animationIntensity] || 1;
-    const duration = baseSeconds * mult;
-    const delay = delaySeconds * mult;
-    return {
-      animation: `pulse-glow ${duration}s ease-in-out infinite ${delay ? `${delay}s` : ''}`
-    };
-  };
-
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-transparent">
-      {/* HTML5 Canvas for Floating Particles */}
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {/* 21st.dev "Almoayyed" Bloom Field Mesh Gradient with Parallax Motion */}
+      <BloomFieldBackground theme={theme} />
+
+      {/* HTML5 Subtle Starlight & Gold Dust Particles */}
       {animationIntensity !== 'none' && (
-        <canvas ref={canvasRef} className="absolute inset-0 opacity-40" />
+        <canvas ref={canvasRef} className="absolute inset-0 opacity-40 z-10" />
       )}
-
-      {/* Cinematic Ambient Radial Lights */}
-      {/* Top Left Flare */}
-      <div 
-        className="light-flare bg-gym-gold-dark/40 dark:bg-gym-silver-dark/20 w-[40vw] h-[40vw] -left-[10vw] -top-[10vw] transition-colors duration-1000"
-        style={getFlareStyle(8)}
-      />
-      
-      {/* Center Right Flare */}
-      <div 
-        className="light-flare bg-gym-gold/30 dark:bg-gym-silver/10 w-[35vw] h-[35vw] -right-[5vw] top-[35vh] transition-colors duration-1000"
-        style={getFlareStyle(12, 2)}
-      />
-      
-      {/* Bottom Left Accent Flare */}
-      <div 
-        className="light-flare bg-gym-gold-deep/30 dark:bg-gym-silver-deep/15 w-[45vw] h-[45vw] -left-[15vw] bottom-[10vh] transition-colors duration-1000"
-        style={getFlareStyle(10, 4)}
-      />
-
-      {/* Theme adaptive overlay to bind them nicely */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#FAFAFA] via-transparent to-[#FAFAFA] dark:from-[#080808] dark:to-[#080808] opacity-90 transition-all duration-1000" />
     </div>
   );
 };

@@ -14,12 +14,16 @@ import ActiveWorkoutSession from './pages/ActiveWorkoutSession';
 import WorkoutSummary from './pages/WorkoutSummary';
 import WorkoutHistory from './pages/WorkoutHistory';
 import UserProfile from './pages/UserProfile';
+import BackgroundEffects from './components/BackgroundEffects';
 
 function App() {
   return (
     <AuthProvider>
       <ContentProvider>
         <Router>
+          {/* Universal 21st.dev Almoayyed Bloom Field Mesh Gradient with Parallax */}
+          <BackgroundEffects />
+
           <Routes>
             {/* Landing & Public Pages */}
             <Route path="/" element={<MainSite />} />
